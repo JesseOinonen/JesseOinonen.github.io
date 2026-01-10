@@ -9,151 +9,185 @@
 
   <style>
     html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
       overflow-x: hidden;
-      background: #111;
+      background: #f7f8fa;
+      color: #2b2b2b;
     }
 
-    /* Navbar */
+    /* ================= NAVBAR ================= */
     .navbar {
       position: fixed;
-      top: 1rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(12px);
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 2rem;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #ffffff;
       z-index: 1000;
-      border-radius: 20px;
-      max-width: 95%;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.2);
-      flex-wrap: wrap;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-bottom: 1px solid #e6e6e6;
     }
 
-    .nav-left img { height: 60px; }
-    .nav-center { flex: 1; display: flex; justify-content: center; }
+    .navbar-inner {
+      max-width: 1200px;
+      margin: auto;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-left img {
+      height: 55px;
+    }
+
+    .nav-center {
+      display: flex;
+      align-items: center;
+    }
+
     .nav-links {
       display: flex;
       gap: 2rem;
-      flex-wrap: wrap;
     }
+
     .nav-links a {
-      color: white;
       text-decoration: none;
       font-weight: 600;
+      color: #2b2b2b;
     }
-    .nav-links a:hover { color: #285b85; }
 
-    /* Hamburger menu */
+    .nav-links a:hover {
+      color: #1f5fa0;
+    }
+
+    /* Hamburger */
     .hamburger {
       display: none;
       flex-direction: column;
       cursor: pointer;
       gap: 5px;
+      margin-left: 1rem;
     }
+
     .hamburger div {
       width: 25px;
       height: 3px;
-      background: white;
+      background: #2b2b2b;
     }
 
-    /* Responsive Navbar */
     @media (max-width: 768px) {
-      .nav-center { width: 100%; justify-content: flex-end; }
       .nav-links {
         display: none;
         flex-direction: column;
-        width: 100%;
-        margin-top: 0.5rem;
-        background: rgba(255,255,255,0.1);
-        border-radius: 15px;
-        padding: 0.5rem 1rem;
+        position: absolute;
+        top: 100%;
+        right: 2rem;
+        background: #ffffff;
+        border: 1px solid #e5e5e5;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
       }
+
       .nav-links.show {
         display: flex;
       }
+
       .hamburger {
         display: flex;
       }
     }
 
+    /* ================= SECTIONS ================= */
     section {
       min-height: 100vh;
+      padding: 6rem 1rem 4rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: white;
       text-align: center;
-      scroll-margin-top: 160px;
-      padding: 3rem 1rem;
+      scroll-margin-top: 100px;
+    }
+
+    section:nth-of-type(even) {
+      background: #ffffff;
+    }
+
+    section:nth-of-type(odd) {
+      background: #f1f3f6;
     }
 
     .animated {
       font-size: 3rem;
-      margin-bottom: 1rem;
+      margin-bottom: 1.2rem;
+      color: #1f5fa0;
     }
 
-    .intro-box, .glass-box {
-      background: rgba(255,255,255,0.1);
-      padding: 1rem 2rem;
-      border-radius: 20px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.2);
+    /* ================= BOXES ================= */
+    .intro-box,
+    .glass-box {
+      background: #ffffff;
+      padding: 1.2rem 2rem;
+      border-radius: 14px;
+      border: 1px solid #e5e5e5;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
       max-width: 800px;
-      margin: 0.5rem 0;
+      margin: 0.7rem 0;
     }
 
-    /* About */
-    .section3 .about-container {
+    /* ================= ABOUT ================= */
+    .about-container {
       max-width: 800px;
-      margin-top: 2rem;
       text-align: left;
+      margin-top: 2rem;
     }
 
-    .about-name { font-size: 1.6rem; font-weight: 600; }
-    .about-details { color: #ccc; }
-
-    .about-hours {
-      text-align: center;
+    .about-name {
       font-size: 1.6rem;
       font-weight: 600;
       margin-top: 1rem;
     }
 
+    .about-details {
+      color: #444;
+    }
+
+    .about-hours {
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      color: #1f5fa0;
+    }
+
     .linkedin-link {
       display: block;
-      margin-top: 0.5rem;
-      color: #285b85;
+      margin-top: 0.7rem;
+      color: #1f5fa0;
       font-weight: 500;
       text-decoration: none;
     }
-    .linkedin-link:hover { color: #1d4261; }
 
-    /* Experience */
+    /* ================= EXPERIENCE ================= */
     .experience-container {
-      max-width: 800px;
+      max-width: 900px;
       width: 100%;
-      text-align: left;
       margin-top: 2rem;
+      text-align: left;
     }
 
     .experience-subtitle {
       font-size: 1.8rem;
       font-weight: 600;
-      margin: 2rem 0 1rem;
       text-align: center;
+      margin: 3rem 0 1.5rem;
+      color: #1f5fa0;
     }
 
-    /* Timeline */
     .timeline {
       position: relative;
       padding-left: 40px;
@@ -166,7 +200,7 @@
       top: 0;
       bottom: 0;
       width: 2px;
-      background: rgba(255,255,255,0.2);
+      background: #d0d7e2;
     }
 
     .timeline-item {
@@ -180,92 +214,109 @@
       top: 12px;
       width: 18px;
       height: 18px;
-      background: #285b85;
+      background: #1f5fa0;
       border-radius: 50%;
-      box-shadow: 0 0 10px rgba(40,91,133,0.8);
     }
 
     .timeline-content {
-      background: rgba(255,255,255,0.08);
+      background: #ffffff;
       padding: 1rem 1.5rem;
-      border-radius: 15px;
-      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      border: 1px solid #e5e5e5;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
     }
 
-    .timeline-title { font-weight: 600; font-size: 1.2rem; }
-    .timeline-role { color: #ccc; }
-    .timeline-date { font-size: 0.9rem; color: #999; }
+    .timeline-title {
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+
+    .timeline-role {
+      color: #444;
+    }
+
+    .timeline-date {
+      font-size: 0.9rem;
+      color: #666;
+    }
 
     .github-link {
       display: block;
-      margin-top: 1rem;
       text-align: center;
+      margin-top: 2rem;
       font-weight: 600;
-      color: #418ac5;
+      color: #1f5fa0;
       text-decoration: none;
     }
-    .github-link:hover { color: #285b85; }
 
+    /* ================= FOOTER ================= */
     footer {
-      background: rgba(0,0,0,0.95);
-      color: white;
+      background: #ffffff;
+      color: #555;
       padding: 2rem 1rem;
       text-align: center;
+      border-top: 1px solid #e6e6e6;
     }
   </style>
 </head>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+
+
 
 <body>
 
 <div id="top"></div>
 
-<!-- Navbar -->
+<!-- NAVBAR -->
 <div class="navbar">
-  <div class="nav-left">
-    <a href="#top"><img src="logo.png"></a>
-  </div>
-  <div class="nav-center">
-    <div class="nav-links" id="navLinks">
-      <a href="#top">Oinonen Consulting</a>
-      <a href="#section1">Introduction</a>
-      <a href="#section3">About me</a>
-      <a href="#section5">Experience</a>
-      <a href="#section4">Contact</a>
+  <div class="navbar-inner">
+    <div class="nav-left">
+      <a href="#top"><img src="logo.png"></a>
     </div>
-    <div class="hamburger" id="hamburger">
-      <div></div>
-      <div></div>
-      <div></div>
+    <div class="nav-center">
+      <div class="nav-links" id="navLinks">
+        <a href="#top">Oinonen Consulting</a>
+        <a href="#section1">Introduction</a>
+        <a href="#section3">About me</a>
+        <a href="#section5">Experience</a>
+        <a href="#section4">Contact</a>
+      </div>
+      <div class="hamburger" id="hamburger">
+        <div></div><div></div><div></div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Introduction -->
+<!-- INTRO -->
 <section id="section1">
-  <div class="animated">Oinonen Consulting<br> FPGA | SoC | ASIC design & verification consulting</div>
-  <div class="intro-box">Digital IC designer with strong experience in SoC development, digital logic design, verification, and FPGA implementation.</div>
-  <div class="intro-box">My background combines hands-on industry work in IC R&D with academic expertise in electronics and telecommunications.</div>
-  <div class="intro-box">Area of consulting: Digital design (VHDL / SystemVerilog), Verification (UVM), FPGA prototyping, Python tooling</div>
+  <div class="animated">Oinonen Consulting<br>FPGA | SoC | ASIC design & verification</div>
+  <div class="intro-box">Digital IC designer with strong experience in SoC development, RTL design, verification, and FPGA implementation.</div>
+  <div class="intro-box">Combining industry-grade IC R&D work with solid academic background.</div>
+  <div class="intro-box">Consulting areas: VHDL / SystemVerilog, UVM, FPGA prototyping, Python tooling</div>
 </section>
 
-<!-- About -->
-<section id="section3" class="section3">
+<!-- ABOUT -->
+<section id="section3">
   <div class="animated">About me</div>
   <div class="about-container">
     <div class="about-name">Jesse Oinonen</div>
-    <div class="about-details">BSc. in Electrical Engineering</div>
-    <div class="about-details">Ongoing MSc. studies in Electronics Design</div>
-    <div class="about-name">Skills:</div>
+    <div class="about-details">BSc. Electrical Engineering</div>
+    <div class="about-details">MSc. studies in Electronics Design (ongoing)</div>
+
+    <div class="about-name">Skills</div>
     <div class="about-details">Digital IC design (VHDL, SystemVerilog)</div>
-    <div class="about-details">SoC architecture & RISC-V development</div>
-    <div class="about-details">FPGA design & prototyping (Vivado, hardware bring-up)</div>
-    <div class="about-details">Verification & testbench development (UVM)</div>
-    <div class="about-details">Programming: Python, C/C++</div>
-    <div class="about-details">Vivado, Design Vision, VCS, QuestaSim, VS Code, Git</div>
-    <div class="about-details">Strong problem-solving & system-level thinking</div>
+    <div class="about-details">SoC architecture & RISC-V</div>
+    <div class="about-details">FPGA design & bring-up (Vivado)</div>
+    <div class="about-details">Verification (UVM)</div>
+    <div class="about-details">Python, C/C++</div>
+
     <div class="about-details">📧 jesse.oinonen25@gmail.com</div>
-    <a href="https://www.linkedin.com/in/jesse-oinonen-802a69262" target="_blank" class="linkedin-link">LinkedIn Profile</a>
-    <div class="about-hours">OVER 1000+ HOURS of experience with digital design & verification</div>
+    <a class="linkedin-link" href="https://www.linkedin.com" target="_blank">LinkedIn profile</a>
+
+    <div class="about-hours">1000+ hours of hands-on digital design & verification</div>
   </div>
 </section>
 
@@ -335,12 +386,12 @@
     <div class="intro-box"><b>Digital Design Project (University)</b><br>Modeled and verified a simple processor core using SystemVerilog as part of 
                               an IC design course. Got familiar with SystemVerilog and the design 
                               flow of digital IC design & verification </div>
-    <a href="https://github.com/JesseOinonen" target="_blank" class="github-link">View my own projects on GitHub</a>
 
+    <a class="github-link" href="https://github.com" target="_blank">View projects on GitHub</a>
   </div>
 </section>
 
-<!-- Contact -->
+<!-- CONTACT -->
 <section id="section4">
   <div class="animated">Contact</div>
   <div class="glass-box">📧 jesse.oinonen25@gmail.com</div>
@@ -348,27 +399,83 @@
 </section>
 
 <footer>
-  &copy; 2025 Oinonen Consulting.
+  © 2025 Oinonen Consulting
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
 <script>
 gsap.registerPlugin(ScrollTrigger);
-gsap.utils.toArray(".animated, .intro-box, .timeline-item").forEach(el => {
-  gsap.from(el, {
+
+/* ===== Hero / Intro ===== */
+gsap.from("#section1 .animated", {
+  opacity: 0,
+  y: 30,
+  duration: 1,
+  ease: "power2.out"
+});
+
+gsap.from("#section1 .intro-box", {
+  opacity: 0,
+  y: 20,
+  duration: 0.8,
+  stagger: 0.15,
+  ease: "power2.out"
+});
+
+/* ===== Section titles ===== */
+gsap.utils.toArray(".animated").forEach(title => {
+  gsap.from(title, {
+    scrollTrigger: {
+      trigger: title,
+      start: "top 80%"
+    },
     opacity: 0,
-    y: 40,
-    duration: 1,
-    scrollTrigger: { trigger: el, start: "top 80%", scrub: true }
+    y: 20,
+    duration: 0.8,
+    ease: "power2.out"
   });
 });
 
-// Hamburger toggle
-const hamburger = document.getElementById('hamburger');
-const navLinks = document.getElementById('navLinks');
-hamburger.addEventListener('click', () => {
-  navLinks.classList.toggle('show');
+/* ===== Content boxes ===== */
+gsap.utils.toArray(".intro-box, .glass-box").forEach(box => {
+  gsap.from(box, {
+    scrollTrigger: {
+      trigger: box,
+      start: "top 85%"
+    },
+    opacity: 0,
+    y: 20,
+    duration: 0.7,
+    ease: "power2.out"
+  });
+});
+
+/* ===== Timeline animation ===== */
+gsap.utils.toArray(".timeline-item").forEach((item, i) => {
+  gsap.from(item, {
+    scrollTrigger: {
+      trigger: item,
+      start: "top 85%"
+    },
+    opacity: 0,
+    x: i % 2 === 0 ? -30 : 30,
+    duration: 0.8,
+    ease: "power2.out"
+  });
+});
+
+/* ===== Navbar subtle reveal ===== */
+gsap.from(".navbar", {
+  opacity: 0,
+  y: -20,
+  duration: 0.8,
+  ease: "power2.out"
+});
+
+/* ===== Hamburger ===== */
+const hamburger = document.getElementById("hamburger");
+const navLinks = document.getElementById("navLinks");
+hamburger.addEventListener("click", () => {
+  navLinks.classList.toggle("show");
 });
 </script>
 
