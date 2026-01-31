@@ -277,7 +277,6 @@
     </div>
     <div class="nav-center">
       <div class="nav-links" id="navLinks">
-        <a href="#top">Oinonen Consulting</a>
         <a href="#section1">Introduction</a>
         <a href="#section3">About me</a>
         <a href="#section5">Experience</a>
@@ -292,7 +291,7 @@
 
 <!-- INTRO -->
 <section id="section1">
-  <div class="animated">Oinonen Consulting<br>FPGA | SoC | ASIC design & verification</div>
+  <div class="animated"><b>Oinonen Consulting</b><br><br><b>FPGA | SoC | ASIC design & verification</b></div>
   <div class="intro-box">Digital IC designer with strong experience in SoC development, RTL design, verification, and FPGA implementation.</div>
   <div class="intro-box">Combining industry-grade IC R&D work with solid academic background.</div>
   <div class="intro-box">Consulting areas: VHDL / SystemVerilog, UVM, FPGA prototyping, Python tooling</div>
@@ -370,24 +369,32 @@
     </div>
 
     <div class="experience-subtitle">Projects</div>
+    <div class="intro-box"><b>Zynq-7000 Hardware-Accelerated Networking Dataplane (Own project)</b><br> Currently under development.
+                           A Linux-controlled (ARM PS) and FPGA-accelerated (PL) networking dataplane designed for deterministic high-throughput packet processing.
+                           Implements an AXI-Stream–based processing pipeline with zero-copy DMA for low-latency data movement between PS and PL.
+                           Includes a reusable observability IP for real-time measurement of throughput, latency, and error statistics, enabling performance-aware system design and verification.</div>
+
     <div class="intro-box"><b>RISC-V + AI accelerator Zynq Soc (Own project)</b><br> Currently under development. 
                            A compact, FPGA-based AI accelerator designed to offload compute-intensive operations from an RV32I core. 
                            Implements a systolic array architecture for efficient matrix and vector computations, enabling fast linear algebra and lightweight ML tasks. 
                            Controlled and sequenced by the RISC-V processor, providing seamless integration into the Zynq-7000 SoC. </div>
+    
     <div class="intro-box"><b>RISC-V Space Applications (Bachelor's thesis)</b><br> Bachelor's thesis that examines the suitability of the RISC-V instruction set 
                            architecture for space applications in the evolving space technology industry, 
                            and its advantages compared to other closed instruction set architecture 
                            solutions.</div>
+    
     <div class="intro-box"><b>I2S Audioport IP Design Project (University)</b><br> Designed and implemented an I2S audio output interface IP block as part of 
                               an SoC design course. Learned the complete IC design and verification flow 
                               from high-level modeling with SystemC to RTL design with SystemVerilog and 
                               VHDL. Gained experience with UVM-based verification, formal methods, logic 
                               synthesis, IC layout, and post-layout analysis. </div>
+    
     <div class="intro-box"><b>Digital Design Project (University)</b><br>Modeled and verified a simple processor core using SystemVerilog as part of 
                               an IC design course. Got familiar with SystemVerilog and the design 
                               flow of digital IC design & verification </div>
 
-    <a class="github-link" href="https://github.com" target="_blank">View projects on GitHub</a>
+    <a class="github-link" href="https://github.com/JesseOinonen" target="_blank">View projects on GitHub</a>
   </div>
 </section>
 
