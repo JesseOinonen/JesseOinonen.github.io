@@ -3,80 +3,219 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oinonen Consulting</title>
+  <title>Oinonen Consulting — FPGA, SoC & ASIC Design</title>
+  <meta name="description" content="Digital IC design & verification consulting — FPGA, SoC, ASIC, RTL, UVM.">
   <link rel="icon" type="image/png" href="logo.png">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
+    :root {
+      --bg: #05080f;
+      --bg-2: #0a101c;
+      --panel: rgba(13, 20, 34, 0.78);
+      --line: rgba(56, 189, 248, 0.18);
+      --cyan: #38e1ff;
+      --cyan-dim: rgba(56, 225, 255, 0.55);
+      --green: #4ade80;
+      --amber: #fbbf24;
+      --text: #d9e4ef;
+      --muted: #8da3b8;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Space Grotesk', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
     html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
-      font-family: 'Poppins', sans-serif;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
       overflow-x: hidden;
-      background: #f7f8fa;
-      color: #2b2b2b;
     }
+
+    ::selection { background: rgba(56, 225, 255, 0.3); }
+
+    /* Scrollbar styled as a bus line */
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--cyan), var(--green));
+      border-radius: 5px;
+      border: 2px solid var(--bg);
+    }
+
+    /* ================= CHIP BACKGROUND ================= */
+    #chip-stage {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 40%, #0b1322 0%, var(--bg) 70%);
+    }
+
+    #die {
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0.9;
+    }
+
+    /* Readability vignette over the die */
+    #chip-stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 45%, rgba(5, 8, 15, 0.25) 0%, rgba(5, 8, 15, 0.72) 100%),
+        linear-gradient(180deg, rgba(5, 8, 15, 0.55), rgba(5, 8, 15, 0.12) 30%, rgba(5, 8, 15, 0.12) 70%, rgba(5, 8, 15, 0.6));
+      pointer-events: none;
+    }
+
+    /* SVG element styles */
+    .substrate { fill: url(#gridPat); stroke: rgba(56, 189, 248, 0.25); stroke-width: 2; }
+    .blk { fill: rgba(15, 26, 44, 0.85); stroke: rgba(56, 225, 255, 0.4); stroke-width: 1.6; }
+    .blk-inner { fill: none; stroke: rgba(56, 225, 255, 0.16); stroke-width: 1; }
+    .blk-label {
+      font-family: var(--mono);
+      font-size: 22px;
+      letter-spacing: 4px;
+      fill: rgba(141, 215, 235, 0.85);
+    }
+    .blk-sub {
+      font-family: var(--mono);
+      font-size: 13px;
+      letter-spacing: 2px;
+      fill: rgba(141, 163, 184, 0.65);
+    }
+    .trace { fill: none; stroke: rgba(56, 189, 248, 0.28); stroke-width: 2.5; }
+    .trace-glow { fill: none; stroke: rgba(56, 189, 248, 0.07); stroke-width: 8; }
+    .pulse {
+      fill: none;
+      stroke: var(--cyan);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 55 945;
+      animation: flow var(--d, 4s) linear infinite;
+      animation-delay: var(--delay, 0s);
+    }
+    .pulse.g { stroke: var(--green); }
+    .pulse.a { stroke: var(--amber); }
+    @keyframes flow {
+      from { stroke-dashoffset: 1000; }
+      to   { stroke-dashoffset: 0; }
+    }
+    .via { fill: #0c1626; stroke: rgba(56, 225, 255, 0.5); stroke-width: 1.5; }
+    .pad { fill: rgba(56, 189, 248, 0.18); stroke: rgba(56, 225, 255, 0.35); stroke-width: 1; }
+    .clb { fill: rgba(13, 23, 40, 0.9); stroke: rgba(56, 225, 255, 0.28); stroke-width: 1; }
+    .clb-core { fill: rgba(56, 225, 255, 0.12); stroke: rgba(56, 225, 255, 0.35); stroke-width: 1; }
+    .led { animation: blink var(--bd, 2s) steps(1) infinite; }
+    @keyframes blink { 0%, 60% { opacity: 1; } 60.1%, 100% { opacity: 0.15; } }
+
+    /* ================= PROGRESS BAR ================= */
+    #busbar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      width: 100%;
+      transform-origin: 0 0;
+      transform: scaleX(0);
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      z-index: 1200;
+      box-shadow: 0 0 12px rgba(56, 225, 255, 0.7);
+    }
+
+    /* ================= HUD ================= */
+    #hud {
+      position: fixed;
+      left: 1.2rem;
+      bottom: 1.1rem;
+      z-index: 900;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 1px;
+      color: var(--cyan-dim);
+      background: rgba(7, 12, 22, 0.7);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.55rem 0.85rem;
+      backdrop-filter: blur(6px);
+      pointer-events: none;
+      line-height: 1.7;
+    }
+    #hud .hud-region { color: var(--green); }
+    #hud .cursor {
+      display: inline-block;
+      width: 7px; height: 12px;
+      background: var(--cyan);
+      vertical-align: -2px;
+      animation: blink 1.1s steps(1) infinite;
+    }
+    @media (max-width: 768px) { #hud { display: none; } }
 
     /* ================= NAVBAR ================= */
     .navbar {
       position: fixed;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
       width: 100%;
-      background: #ffffff;
       z-index: 1000;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      border-bottom: 1px solid #e6e6e6;
+      background: rgba(6, 10, 18, 0.72);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
     }
 
     .navbar-inner {
       max-width: 1200px;
       margin: auto;
-      padding: 1rem 2rem;
+      padding: 0.8rem 2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    .nav-left img {
-      height: 55px;
+    .nav-left { display: flex; align-items: center; gap: 0.8rem; }
+    .nav-left img { height: 44px; filter: drop-shadow(0 0 8px rgba(56, 225, 255, 0.25)); }
+    .nav-brand {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      color: var(--text);
+      text-decoration: none;
     }
+    .nav-brand span { color: var(--cyan); }
 
-    .nav-center {
-      display: flex;
-      align-items: center;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 2rem;
-    }
+    .nav-center { display: flex; align-items: center; }
+    .nav-links { display: flex; gap: 1.8rem; }
 
     .nav-links a {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      letter-spacing: 1.5px;
       text-decoration: none;
-      font-weight: 600;
-      color: #2b2b2b;
+      color: var(--muted);
+      padding: 0.3rem 0;
+      border-bottom: 1px solid transparent;
+      transition: color 0.25s, border-color 0.25s;
+    }
+    .nav-links a .idx { color: var(--cyan); opacity: 0.7; margin-right: 4px; }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--text);
+      border-bottom-color: var(--cyan);
     }
 
-    .nav-links a:hover {
-      color: #1f5fa0;
-    }
-
-    /* Hamburger */
     .hamburger {
       display: none;
       flex-direction: column;
       cursor: pointer;
       gap: 5px;
       margin-left: 1rem;
+      padding: 6px;
     }
-
-    .hamburger div {
-      width: 25px;
-      height: 3px;
-      background: #2b2b2b;
-    }
+    .hamburger div { width: 24px; height: 2px; background: var(--cyan); }
 
     @media (max-width: 768px) {
       .nav-links {
@@ -84,235 +223,706 @@
         flex-direction: column;
         position: absolute;
         top: 100%;
-        right: 2rem;
-        background: #ffffff;
-        border: 1px solid #e5e5e5;
+        right: 1rem;
+        background: rgba(8, 13, 24, 0.96);
+        border: 1px solid var(--line);
         border-radius: 12px;
-        padding: 1rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        padding: 1rem 1.4rem;
+        gap: 1rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
       }
-
-      .nav-links.show {
-        display: flex;
-      }
-
-      .hamburger {
-        display: flex;
-      }
+      .nav-links.show { display: flex; }
+      .hamburger { display: flex; }
+      .nav-brand { display: none; }
     }
 
     /* ================= SECTIONS ================= */
+    main { position: relative; z-index: 1; }
+
     section {
       min-height: 100vh;
-      padding: 6rem 1rem 4rem;
+      padding: 7rem 1.2rem 5rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      scroll-margin-top: 80px;
+    }
+
+    .sec-head {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 2.5rem;
+    }
+    .sec-addr {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--cyan);
+      opacity: 0.8;
+      letter-spacing: 2px;
+    }
+    .sec-head h2 {
+      margin: 0;
+      font-size: clamp(1.7rem, 4vw, 2.6rem);
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .sec-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--cyan), transparent);
+      transform-origin: 0 0;
+    }
+
+    /* ================= HERO ================= */
+    #section1 {
       text-align: center;
-      scroll-margin-top: 100px;
+      justify-content: center;
     }
 
-    section:nth-of-type(even) {
-      background: #ffffff;
+    .hero-tag {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      letter-spacing: 3px;
+      color: var(--green);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+      border-radius: 999px;
+      padding: 0.4rem 1.1rem;
+      margin-bottom: 1.6rem;
+      background: rgba(74, 222, 128, 0.06);
     }
 
-    section:nth-of-type(odd) {
-      background: #f1f3f6;
+    .hero-title {
+      font-size: clamp(2.4rem, 7vw, 5rem);
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin: 0 0 0.6rem;
+      line-height: 1.05;
+      background: linear-gradient(120deg, #eaf6ff 30%, var(--cyan) 60%, var(--green) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    .animated {
-      font-size: 3rem;
-      margin-bottom: 1.2rem;
-      color: #1f5fa0;
+    .hero-sub {
+      font-size: clamp(1.05rem, 2.5vw, 1.5rem);
+      color: var(--muted);
+      letter-spacing: 1px;
+      margin-bottom: 2.2rem;
+    }
+    .hero-sub b { color: var(--text); }
+
+    .hero-terminal {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--green);
+      min-height: 1.4em;
+      margin-bottom: 2.4rem;
+      letter-spacing: 0.5px;
+    }
+    .hero-terminal::after {
+      content: "▌";
+      animation: blink 1s steps(1) infinite;
     }
 
-    /* ================= BOXES ================= */
-    .intro-box,
-    .glass-box {
-      background: #ffffff;
-      padding: 1.2rem 2rem;
-      border-radius: 14px;
-      border: 1px solid #e5e5e5;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-      max-width: 800px;
-      margin: 0.7rem 0;
+    .hero-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      max-width: 980px;
     }
 
-    /* ================= ABOUT ================= */
-    .about-container {
-      max-width: 800px;
-      text-align: left;
+    .chip-tagrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      justify-content: center;
       margin-top: 2rem;
     }
-
-    .about-name {
-      font-size: 1.6rem;
-      font-weight: 600;
-      margin-top: 1rem;
+    .chip-tag {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      color: var(--cyan);
+      border: 1px solid rgba(56, 225, 255, 0.3);
+      background: rgba(56, 225, 255, 0.06);
+      padding: 0.4rem 0.9rem;
+      border-radius: 6px;
+      transition: background 0.25s, box-shadow 0.25s, transform 0.25s;
+    }
+    .chip-tag:hover {
+      background: rgba(56, 225, 255, 0.14);
+      box-shadow: 0 0 18px rgba(56, 225, 255, 0.25);
+      transform: translateY(-2px);
     }
 
-    .about-details {
-      color: #444;
+    .scroll-hint {
+      margin-top: 3.5rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 3px;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .scroll-hint .wire {
+      width: 1px;
+      height: 46px;
+      background: linear-gradient(180deg, var(--cyan), transparent);
+      position: relative;
+      overflow: hidden;
+    }
+    .scroll-hint .wire::after {
+      content: "";
+      position: absolute;
+      left: -2px; top: -10px;
+      width: 5px; height: 10px;
+      border-radius: 3px;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      animation: drop 1.8s ease-in infinite;
+    }
+    @keyframes drop {
+      to { transform: translateY(60px); }
     }
 
-    .about-hours {
-      text-align: center;
-      font-size: 1.4rem;
-      font-weight: 600;
-      margin-top: 1.5rem;
-      color: #1f5fa0;
+    /* ================= CARDS ================= */
+    .card {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.3rem 1.8rem;
+      max-width: 840px;
+      width: 100%;
+      margin: 0.6rem 0;
+      backdrop-filter: blur(10px);
+      text-align: left;
+      line-height: 1.65;
+      color: var(--text);
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+    .card:hover {
+      border-color: rgba(56, 225, 255, 0.45);
+      box-shadow: 0 0 30px rgba(56, 225, 255, 0.1), 0 18px 40px rgba(0, 0, 0, 0.4);
+      transform: translateY(-3px);
+    }
+    /* corner brackets like probe pads */
+    .card::before, .card::after {
+      content: "";
+      position: absolute;
+      width: 14px; height: 14px;
+      border-color: var(--cyan);
+      border-style: solid;
+      opacity: 0.55;
+      transition: opacity 0.3s;
+    }
+    .card::before {
+      top: -1px; left: -1px;
+      border-width: 2px 0 0 2px;
+      border-radius: 4px 0 0 0;
+    }
+    .card::after {
+      bottom: -1px; right: -1px;
+      border-width: 0 2px 2px 0;
+      border-radius: 0 0 4px 0;
+    }
+    .card:hover::before, .card:hover::after { opacity: 1; }
+
+    .card b { color: var(--cyan); letter-spacing: 0.5px; }
+
+    .hero-cards .card { max-width: 300px; text-align: center; font-size: 0.95rem; color: var(--muted); }
+    .hero-cards .card strong { display: block; color: var(--text); font-size: 1.02rem; margin-bottom: 0.4rem; }
+
+    /* ================= ABOUT ================= */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.4rem;
+      width: 100%;
+      max-width: 900px;
+    }
+    @media (max-width: 768px) { .about-grid { grid-template-columns: 1fr; } }
+
+    .about-grid .card { margin: 0; max-width: none; }
+
+    .card-label {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 2.5px;
+      color: var(--green);
+      margin-bottom: 0.8rem;
     }
 
-    .linkedin-link {
-      display: block;
-      margin-top: 0.7rem;
-      color: #1f5fa0;
-      font-weight: 500;
+    .about-name { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .about-details { color: var(--muted); margin: 0.25rem 0; }
+
+    .skill-list { list-style: none; margin: 0; padding: 0; }
+    .skill-list li {
+      padding: 0.45rem 0;
+      border-bottom: 1px dashed rgba(56, 189, 248, 0.12);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    .skill-list li:last-child { border-bottom: none; }
+    .skill-list li::before {
+      content: "▸";
+      color: var(--cyan);
+      font-size: 0.8rem;
+    }
+
+    .stat-card {
+      grid-column: 1 / -1;
+      text-align: center !important;
+    }
+    .stat-num {
+      font-family: var(--mono);
+      font-size: clamp(2.4rem, 6vw, 3.6rem);
+      font-weight: 700;
+      color: var(--cyan);
+      text-shadow: 0 0 30px rgba(56, 225, 255, 0.4);
+    }
+    .stat-desc { color: var(--muted); letter-spacing: 1px; margin-top: 0.3rem; }
+
+    .contact-line { margin-top: 1.2rem; }
+    .contact-line a, .linkedin-link {
+      color: var(--cyan);
       text-decoration: none;
+      border-bottom: 1px solid rgba(56, 225, 255, 0.3);
+      transition: border-color 0.25s;
     }
+    .contact-line a:hover, .linkedin-link:hover { border-bottom-color: var(--cyan); }
 
     /* ================= EXPERIENCE ================= */
     .experience-container {
       max-width: 900px;
       width: 100%;
-      margin-top: 2rem;
       text-align: left;
     }
 
     .experience-subtitle {
-      font-size: 1.8rem;
-      font-weight: 600;
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
       text-align: center;
-      margin: 3rem 0 1.5rem;
-      color: #1f5fa0;
+      margin: 3.5rem 0 2rem;
+      color: var(--green);
     }
+    .experience-subtitle::before { content: "// "; color: var(--muted); }
 
     .timeline {
       position: relative;
-      padding-left: 40px;
+      padding-left: 44px;
     }
-
+    /* the bus */
     .timeline::before {
       content: "";
       position: absolute;
       left: 15px;
-      top: 0;
-      bottom: 0;
+      top: 6px;
+      bottom: 6px;
       width: 2px;
-      background: #d0d7e2;
+      background: linear-gradient(180deg, var(--cyan), rgba(56, 189, 248, 0.15));
+      box-shadow: 0 0 10px rgba(56, 225, 255, 0.3);
     }
 
-    .timeline-item {
-      position: relative;
-      margin-bottom: 2.5rem;
+    .timeline-item { position: relative; margin-bottom: 2.2rem; }
+    /* via node */
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: -36px;
+      top: 22px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px solid var(--cyan);
+      box-shadow: 0 0 12px rgba(56, 225, 255, 0.6);
+    }
+    /* stub trace into the card */
+    .timeline-item::after {
+      content: "";
+      position: absolute;
+      left: -22px;
+      top: 28px;
+      width: 22px;
+      height: 1px;
+      background: rgba(56, 225, 255, 0.35);
     }
 
     .timeline-content {
-      background: #ffffff;
-      padding: 1rem 1.5rem;
-      border-radius: 14px;
-      border: 1px solid #e5e5e5;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+      position: relative;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      padding: 1.2rem 1.6rem;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .timeline-content:hover {
+      border-color: rgba(56, 225, 255, 0.45);
+      box-shadow: 0 0 26px rgba(56, 225, 255, 0.1);
     }
 
-    .timeline-title {
-      font-weight: 600;
-      font-size: 1.2rem;
-    }
-
-    .timeline-role {
-      color: #444;
-    }
-
+    .timeline-title { font-weight: 700; font-size: 1.15rem; color: var(--text); }
+    .timeline-role { color: var(--muted); margin-top: 0.35rem; line-height: 1.65; }
+    .timeline-title + .timeline-role { color: var(--cyan); margin-top: 0.15rem; }
     .timeline-date {
-      font-size: 0.9rem;
-      color: #666;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      letter-spacing: 1px;
+      color: var(--green);
+      margin: 0.25rem 0 0.4rem;
     }
 
     .github-link {
-      display: block;
-      text-align: center;
-      margin-top: 2rem;
-      font-weight: 600;
-      color: #1f5fa0;
+      display: inline-block;
+      margin: 2.5rem auto 0;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      letter-spacing: 1.5px;
+      color: var(--cyan);
       text-decoration: none;
+      border: 1px solid rgba(56, 225, 255, 0.35);
+      border-radius: 8px;
+      padding: 0.7rem 1.6rem;
+      background: rgba(56, 225, 255, 0.06);
+      transition: background 0.25s, box-shadow 0.25s;
+    }
+    .github-link:hover {
+      background: rgba(56, 225, 255, 0.14);
+      box-shadow: 0 0 24px rgba(56, 225, 255, 0.25);
+    }
+    .github-wrap { text-align: center; }
+
+    /* ================= CONTACT ================= */
+    #section4 { text-align: center; }
+    #section4 .card { text-align: center; max-width: 480px; font-size: 1.1rem; }
+
+    .eof {
+      margin-top: 3rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      letter-spacing: 3px;
+      color: var(--muted);
+      opacity: 0.7;
     }
 
     /* ================= FOOTER ================= */
     footer {
-      background: #ffffff;
-      color: #555;
+      position: relative;
+      z-index: 1;
       padding: 2rem 1rem;
       text-align: center;
-      border-top: 1px solid #e6e6e6;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      background: rgba(6, 10, 18, 0.8);
+      backdrop-filter: blur(8px);
+    }
+    footer span { color: var(--green); }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .pulse, .led, .scroll-hint .wire::after, .hero-terminal::after, #hud .cursor { animation: none; }
+      html { scroll-behavior: auto; }
     }
   </style>
 </head>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
-
-
 
 <body>
 
 <div id="top"></div>
 
-<!-- NAVBAR -->
+<!-- Scroll progress "bus" -->
+<div id="busbar"></div>
+
+<!-- ============ FIXED CHIP DIE BACKGROUND ============ -->
+<div id="chip-stage" aria-hidden="true">
+  <svg id="die" viewBox="0 0 1600 1200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="gridPat" width="40" height="40" patternUnits="userSpaceOnUse">
+        <rect width="40" height="40" fill="#070d18"/>
+        <path d="M40 0H0V40" fill="none" stroke="rgba(56,189,248,0.05)" stroke-width="1"/>
+      </pattern>
+      <pattern id="hatch" width="14" height="14" patternUnits="userSpaceOnUse">
+        <path d="M0 14L14 0" stroke="rgba(56,225,255,0.08)" stroke-width="1"/>
+      </pattern>
+      <linearGradient id="busGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="rgba(56,225,255,0.22)"/>
+        <stop offset="1" stop-color="rgba(74,222,128,0.18)"/>
+      </linearGradient>
+    </defs>
+
+    <!-- substrate -->
+    <rect class="substrate" x="60" y="50" width="1480" height="1100" rx="14"/>
+
+    <!-- generated pad ring / CLBs / vias injected here -->
+    <g id="padRing"></g>
+
+    <!-- ====== TRACES (glow underlay, line, pulse overlay) ====== -->
+    <g id="traces">
+      <!-- core -> AXI -->
+      <path class="trace-glow" d="M370 470 V540"/>
+      <path class="trace" d="M370 470 V540"/>
+      <path class="pulse" d="M370 470 V540" pathLength="1000" style="--d:3.2s"/>
+      <!-- AXI -> fabric -->
+      <path class="trace-glow" d="M780 568 H840"/>
+      <path class="trace" d="M780 568 H840"/>
+      <path class="pulse g" d="M780 568 H840" pathLength="1000" style="--d:2.6s; --delay:.5s"/>
+      <!-- PLL -> AXI -->
+      <path class="trace-glow" d="M730 250 V540"/>
+      <path class="trace" d="M730 250 V540"/>
+      <path class="pulse a" d="M730 250 V540" pathLength="1000" style="--d:4.5s; --delay:1.2s"/>
+      <!-- core -> fabric (data highway) -->
+      <path class="trace-glow" d="M620 290 H840"/>
+      <path class="trace" d="M620 290 H840"/>
+      <path class="pulse" d="M620 290 H840" pathLength="1000" style="--d:3.8s; --delay:.8s"/>
+      <path class="pulse g" d="M620 320 H840" pathLength="1000" style="--d:3.1s; --delay:1.9s"/>
+      <path class="trace" d="M620 320 H840"/>
+      <!-- fabric -> DDR -->
+      <path class="trace-glow" d="M1340 480 H1380"/>
+      <path class="trace" d="M1340 480 H1380"/>
+      <path class="pulse" d="M1340 480 H1380" pathLength="1000" style="--d:2.2s; --delay:.3s"/>
+      <path class="trace" d="M1340 540 H1380"/>
+      <path class="pulse g" d="M1340 540 H1380" pathLength="1000" style="--d:2.4s; --delay:1.4s"/>
+      <!-- fabric -> IO ctrl -->
+      <path class="trace-glow" d="M1090 740 V800"/>
+      <path class="trace" d="M1090 740 V800"/>
+      <path class="pulse a" d="M1090 740 V800" pathLength="1000" style="--d:3s; --delay:2.1s"/>
+      <!-- DSP -> AXI -->
+      <path class="trace-glow" d="M280 660 V596"/>
+      <path class="trace" d="M280 660 V596"/>
+      <path class="pulse g" d="M280 660 V596" pathLength="1000" style="--d:3.4s; --delay:.9s"/>
+      <!-- SRAM -> AXI -->
+      <path class="trace-glow" d="M640 660 V596"/>
+      <path class="trace" d="M640 660 V596"/>
+      <path class="pulse" d="M640 660 V596" pathLength="1000" style="--d:2.8s; --delay:1.7s"/>
+      <!-- DDR -> IO ctrl, around the edge -->
+      <path class="trace-glow" d="M1440 650 V880 H1340"/>
+      <path class="trace" d="M1440 650 V880 H1340"/>
+      <path class="pulse a" d="M1440 650 V880 H1340" pathLength="1000" style="--d:5s; --delay:.4s"/>
+      <!-- long diagnostic loop core -> DSP -->
+      <path class="trace-glow" d="M180 470 V620 H120 V760 H120"/>
+      <path class="trace" d="M180 470 V620 H100 V780 H120"/>
+      <path class="pulse" d="M180 470 V620 H100 V780 H120" pathLength="1000" style="--d:6s; --delay:2.6s"/>
+    </g>
+
+    <!-- ====== BLOCKS ====== -->
+    <g id="blocks">
+      <!-- RISC-V CORE -->
+      <g id="blk-core">
+        <rect class="blk" x="120" y="110" width="500" height="360" rx="8"/>
+        <rect x="124" y="114" width="492" height="352" rx="6" fill="url(#hatch)"/>
+        <rect class="blk-inner" x="150" y="150" width="200" height="120" rx="4"/>
+        <text class="blk-sub" x="160" y="175">ALU</text>
+        <rect class="blk-inner" x="370" y="150" width="220" height="120" rx="4"/>
+        <text class="blk-sub" x="380" y="175">DECODE / FETCH</text>
+        <rect class="blk-inner" x="150" y="290" width="200" height="130" rx="4"/>
+        <text class="blk-sub" x="160" y="315">REG FILE x32</text>
+        <rect class="blk-inner" x="370" y="290" width="220" height="130" rx="4"/>
+        <text class="blk-sub" x="380" y="315">LSU / CSR</text>
+        <text class="blk-label" x="370" y="98" text-anchor="middle">RV32I CORE</text>
+        <circle class="led" cx="600" cy="132" r="5" fill="#4ade80" style="--bd:1.6s"/>
+      </g>
+
+      <!-- PLL -->
+      <g id="blk-pll">
+        <rect class="blk" x="660" y="110" width="140" height="140" rx="8"/>
+        <circle class="blk-inner" cx="730" cy="180" r="40"/>
+        <circle class="blk-inner" cx="730" cy="180" r="22"/>
+        <text class="blk-label" x="730" y="98" text-anchor="middle" font-size="18">PLL</text>
+        <circle class="led" cx="784" cy="128" r="4" fill="#fbbf24" style="--bd:0.9s"/>
+      </g>
+
+      <!-- DDR PHY -->
+      <g id="blk-ddr">
+        <rect class="blk" x="1380" y="110" width="120" height="540" rx="8"/>
+        <text class="blk-label" x="1440" y="390" text-anchor="middle" font-size="20" transform="rotate(90 1440 390)">DDR&#160;PHY</text>
+        <circle class="led" cx="1440" cy="140" r="4" fill="#38e1ff" style="--bd:1.2s"/>
+      </g>
+
+      <!-- FPGA FABRIC -->
+      <g id="blk-fabric">
+        <rect class="blk" x="840" y="300" width="500" height="440" rx="8"/>
+        <g id="clbGrid"></g>
+        <text class="blk-label" x="1090" y="288" text-anchor="middle">FPGA FABRIC</text>
+        <circle class="led" cx="1320" cy="322" r="5" fill="#4ade80" style="--bd:2.3s"/>
+      </g>
+
+      <!-- AXI INTERCONNECT -->
+      <g id="blk-axi">
+        <rect class="blk" x="120" y="540" width="660" height="56" rx="6" fill="url(#busGrad)"/>
+        <text class="blk-sub" x="450" y="574" text-anchor="middle" font-size="18" letter-spacing="6">AXI4 INTERCONNECT</text>
+      </g>
+
+      <!-- DSP -->
+      <g id="blk-dsp">
+        <rect class="blk" x="120" y="660" width="320" height="240" rx="8"/>
+        <rect x="124" y="664" width="312" height="232" rx="6" fill="url(#hatch)"/>
+        <rect class="blk-inner" x="150" y="700" width="120" height="70" rx="4"/>
+        <text class="blk-sub" x="160" y="725">FIR</text>
+        <rect class="blk-inner" x="290" y="700" width="120" height="70" rx="4"/>
+        <text class="blk-sub" x="300" y="725">NCO</text>
+        <rect class="blk-inner" x="150" y="800" width="260" height="70" rx="4"/>
+        <text class="blk-sub" x="160" y="825">MAC ARRAY</text>
+        <text class="blk-label" x="280" y="940" text-anchor="middle" font-size="18">DSP / QAM</text>
+      </g>
+
+      <!-- SRAM -->
+      <g id="blk-sram">
+        <rect class="blk" x="500" y="660" width="280" height="240" rx="8"/>
+        <g id="sramBanks"></g>
+        <text class="blk-label" x="640" y="940" text-anchor="middle" font-size="18">SRAM</text>
+      </g>
+
+      <!-- IO controller -->
+      <g id="blk-io">
+        <rect class="blk" x="840" y="800" width="500" height="160" rx="8"/>
+        <rect class="blk-inner" x="870" y="830" width="130" height="100" rx="4"/>
+        <text class="blk-sub" x="885" y="885" font-size="16">I2S</text>
+        <rect class="blk-inner" x="1025" y="830" width="130" height="100" rx="4"/>
+        <text class="blk-sub" x="1040" y="885" font-size="16">UART</text>
+        <rect class="blk-inner" x="1180" y="830" width="130" height="100" rx="4"/>
+        <text class="blk-sub" x="1195" y="885" font-size="16">GPIO</text>
+        <text class="blk-label" x="1090" y="1000" text-anchor="middle" font-size="18">PERIPHERALS</text>
+        <circle class="led" cx="1320" cy="822" r="4" fill="#fbbf24" style="--bd:1.4s"/>
+      </g>
+
+      <!-- silkscreen-ish labels -->
+      <text class="blk-sub" x="120" y="1080" font-size="16" letter-spacing="4">OINONEN-SOC REV-A · 28nm · TURKU.FI</text>
+      <text class="blk-sub" x="1500" y="1080" font-size="16" text-anchor="end" letter-spacing="4">JTAG OK · CLK 200MHz</text>
+    </g>
+
+    <g id="vias">
+      <circle class="via" cx="730" cy="250" r="6"/>
+      <circle class="via" cx="370" cy="470" r="6"/>
+      <circle class="via" cx="280" cy="660" r="6"/>
+      <circle class="via" cx="640" cy="660" r="6"/>
+      <circle class="via" cx="1090" cy="740" r="6"/>
+      <circle class="via" cx="1440" cy="880" r="6"/>
+      <circle class="via" cx="100" cy="620" r="5"/>
+      <circle class="via" cx="100" cy="780" r="5"/>
+    </g>
+  </svg>
+</div>
+
+<!-- ============ HUD ============ -->
+<div id="hud">
+  <div>REGION&nbsp;: <span class="hud-region" id="hudRegion">FULL_DIE</span></div>
+  <div>ADDR&nbsp;&nbsp;&nbsp;: <span id="hudAddr">0x0000</span> <span class="cursor"></span></div>
+</div>
+
+<!-- ============ NAVBAR ============ -->
 <div class="navbar">
   <div class="navbar-inner">
     <div class="nav-left">
-      <a href="#top"><img src="logo.png"></a>
+      <a href="#top"><img src="logo.png" alt="Oinonen Consulting logo"></a>
+      <a class="nav-brand" href="#top">OINONEN<span>::</span>CONSULTING</a>
     </div>
     <div class="nav-center">
       <div class="nav-links" id="navLinks">
-        <a href="#section1">Introduction</a>
-        <a href="#section3">About me</a>
-        <a href="#section5">Experience</a>
-        <a href="#section4">Contact</a>
+        <a href="#section1" data-sec="section1"><span class="idx">0x00</span>INTRO</a>
+        <a href="#section3" data-sec="section3"><span class="idx">0x01</span>ABOUT</a>
+        <a href="#section5" data-sec="section5"><span class="idx">0x02</span>EXPERIENCE</a>
+        <a href="#section4" data-sec="section4"><span class="idx">0x03</span>CONTACT</a>
       </div>
-      <div class="hamburger" id="hamburger">
+      <div class="hamburger" id="hamburger" aria-label="Menu">
         <div></div><div></div><div></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- INTRO -->
+<main>
+
+<!-- ============ INTRO ============ -->
 <section id="section1">
-  <div class="animated"><b>Oinonen Consulting</b><br><br><b>FPGA, SoC & ASIC <br> Design & Verification</b></div>
-  <div class="intro-box">Digital IC designer with strong experience in SoC development, RTL design, verification, and FPGA implementation.</div>
-  <div class="intro-box">Combining industry-grade IC R&D work with solid academic background.</div>
-  <div class="intro-box">Consulting areas: VHDL / SystemVerilog, UVM, FPGA prototyping, Python tooling</div>
-</section>
+  <div class="hero-tag">● SYSTEM ONLINE — ACCEPTING NEW PROJECTS</div>
+  <h1 class="hero-title">OINONEN<br>CONSULTING</h1>
+  <div class="hero-sub"><b>FPGA, SoC &amp; ASIC</b> — Design &amp; Verification</div>
+  <div class="hero-terminal" id="heroTerminal"></div>
 
-<!-- ABOUT -->
-<section id="section3">
-  <div class="animated">About me</div>
-  <div class="about-container">
-    <div class="about-name">Jesse Oinonen</div>
-    <div class="about-details">B.Sc. Electrical & Communications Engineering</div>
-    <div class="about-details">M.Sc. Studies in Electronics Design (ongoing)</div>
+  <div class="hero-cards">
+    <div class="card"><strong>Digital IC Design</strong>Digital IC designer with strong experience in SoC development, RTL design, verification, and FPGA implementation.</div>
+    <div class="card"><strong>Industry + Academia</strong>Combining industry-grade IC R&amp;D work with solid academic background.</div>
+    <div class="card"><strong>Consulting Areas</strong>VHDL / SystemVerilog, UVM, FPGA prototyping, Python tooling</div>
+  </div>
 
-    <div class="about-name">Skills</div>
-    <div class="about-details">Digital IC design (VHDL, SystemVerilog)</div>
-    <div class="about-details">SoC architecture & RISC-V</div>
-    <div class="about-details">FPGA design & bring-up (Vivado)</div>
-    <div class="about-details">Verification (UVM, SVA)</div>
-    <div class="about-details">Python scripting</div>
-    <div class="about-details">C/C++ programming</div>
+  <div class="chip-tagrow">
+    <span class="chip-tag">VHDL</span>
+    <span class="chip-tag">SystemVerilog</span>
+    <span class="chip-tag">UVM</span>
+    <span class="chip-tag">RISC-V</span>
+    <span class="chip-tag">Vivado</span>
+    <span class="chip-tag">Python</span>
+    <span class="chip-tag">C/C++</span>
+  </div>
 
-    <div class="about-details">📧 jesse.oinonen25@gmail.com</div>
-    <a class="linkedin-link" href="https://www.linkedin.com/in/jesse-oinonen-802a69262" target="_blank">LinkedIn profile</a>
-
-    <div class="about-hours">1000+ hours of hands-on digital design & verification experience</div>
+  <div class="scroll-hint">
+    <span>SCROLL TO EXPLORE THE DIE</span>
+    <span class="wire"></span>
   </div>
 </section>
 
-<!-- Experience -->
+<!-- ============ ABOUT ============ -->
+<section id="section3">
+  <div class="sec-head">
+    <span class="sec-addr">0x01 //</span>
+    <h2>About me</h2>
+    <span class="sec-line"></span>
+  </div>
+
+  <div class="about-grid">
+    <div class="card">
+      <div class="card-label">ENGINEER.PROFILE</div>
+      <div class="about-name">Jesse Oinonen</div>
+      <div class="about-details">B.Sc. Electrical &amp; Communications Engineering</div>
+      <div class="about-details">M.Sc. Studies in Electronics Design (ongoing)</div>
+      <div class="contact-line about-details">📧 <a href="mailto:jesse.oinonen25@gmail.com">jesse.oinonen25@gmail.com</a></div>
+      <div class="about-details">🔗 <a class="linkedin-link" href="https://www.linkedin.com/in/jesse-oinonen-802a69262" target="_blank" rel="noopener">LinkedIn profile</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">SKILLS.MAP</div>
+      <ul class="skill-list">
+        <li>Digital IC design (VHDL, SystemVerilog)</li>
+        <li>SoC architecture &amp; RISC-V</li>
+        <li>FPGA design &amp; bring-up (Vivado)</li>
+        <li>Verification (UVM, SVA)</li>
+        <li>Python scripting</li>
+        <li>C/C++ programming</li>
+      </ul>
+    </div>
+
+    <div class="card stat-card">
+      <div class="stat-num"><span id="hoursCounter">0</span>+</div>
+      <div class="stat-desc">hours of hands-on digital design &amp; verification experience</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EXPERIENCE ============ -->
 <section id="section5">
-  <div class="animated">Experience</div>
+  <div class="sec-head">
+    <span class="sec-addr">0x02 //</span>
+    <h2>Experience</h2>
+    <span class="sec-line"></span>
+  </div>
 
   <div class="experience-container">
 
@@ -336,7 +946,7 @@
                       logic analyzers.</div>
         </div>
       </div>
-      
+
       <div class="timeline-item">
         <div class="timeline-content">
           <div class="timeline-title">LG Electronics</div>
@@ -356,8 +966,8 @@
           <div class="timeline-title">Abloy</div>
           <div class="timeline-role">R&D Electronics Engineer Summer Trainee</div>
           <div class="timeline-date">06/2024 - 08/2024</div>
-          <div class="timeline-role">Involved in prototype construction, design, and documentation, as well as breadboard design and implementation. Conducted electronics testing (DVT), 
-                                     troubleshooting, and environmental testing of electronics. Supported development projects, 
+          <div class="timeline-role">Involved in prototype construction, design, and documentation, as well as breadboard design and implementation. Conducted electronics testing (DVT),
+                                     troubleshooting, and environmental testing of electronics. Supported development projects,
                                      maintained electronics lab equipment, and contributed to the development of production testing methods and software design.</div>
         </div>
       </div>
@@ -374,128 +984,295 @@
     </div>
 
     <div class="experience-subtitle">Projects</div>
-    <div class="intro-box"><b>Zynq-7000 Hardware-Accelerated Networking Dataplane (Own project)</b><br> Currently under development.
+
+    <div class="card"><b>Zynq-7000 Hardware-Accelerated Networking Dataplane (Own project)</b><br> Currently under development.
                            A Linux-controlled (ARM PS) and FPGA-accelerated (PL) networking dataplane designed for deterministic high-throughput packet processing.
                            Implements an AXI-Stream–based processing pipeline with zero-copy DMA for low-latency data movement between PS and PL.
                            Includes a reusable observability IP for real-time measurement of throughput, latency, and error statistics, enabling performance-aware system design and verification.</div>
 
-    <div class="intro-box"><b>RISC-V + AI accelerator Zynq Soc (Own project)</b><br> Currently under development. 
-                           A compact, FPGA-based AI accelerator designed to offload compute-intensive operations from an RV32I core. 
-                           Implements a systolic array architecture for efficient matrix and vector computations, enabling fast linear algebra and lightweight ML tasks. 
+    <div class="card"><b>RISC-V + AI accelerator Zynq Soc (Own project)</b><br> Currently under development.
+                           A compact, FPGA-based AI accelerator designed to offload compute-intensive operations from an RV32I core.
+                           Implements a systolic array architecture for efficient matrix and vector computations, enabling fast linear algebra and lightweight ML tasks.
                            Controlled and sequenced by the RISC-V processor, providing seamless integration into the Zynq-7000 SoC. </div>
-    
-    <div class="intro-box"><b>RISC-V Space Applications (Bachelor's thesis)</b><br> Bachelor's thesis that examines the suitability of the RISC-V instruction set 
-                           architecture for space applications in the evolving space technology industry, 
-                           and its advantages compared to other closed instruction set architecture 
+
+    <div class="card"><b>RISC-V Space Applications (Bachelor's thesis)</b><br> Bachelor's thesis that examines the suitability of the RISC-V instruction set
+                           architecture for space applications in the evolving space technology industry,
+                           and its advantages compared to other closed instruction set architecture
                            solutions.</div>
-    
-    <div class="intro-box"><b>I2S Audioport IP Design Project (University)</b><br> Designed and implemented an I2S audio output interface IP block as part of 
-                              an SoC design course. Learned the complete IC design and verification flow 
-                              from high-level modeling with SystemC to RTL design with SystemVerilog and 
-                              VHDL. Gained experience with UVM-based verification, formal methods, logic 
+
+    <div class="card"><b>I2S Audioport IP Design Project (University)</b><br> Designed and implemented an I2S audio output interface IP block as part of
+                              an SoC design course. Learned the complete IC design and verification flow
+                              from high-level modeling with SystemC to RTL design with SystemVerilog and
+                              VHDL. Gained experience with UVM-based verification, formal methods, logic
                               synthesis, IC layout, and post-layout analysis. </div>
 
-     <div class="intro-box"><b>QAM64 Demodulator Project (University)</b><br>
+    <div class="card"><b>QAM64 Demodulator Project (University)</b><br>
                                Designed and implemented a QAM64 demodulator using C++ for high-level
                                synthesis (Catapult HLS), covering DSP components such as CORDIC-based
                                NCO, FIR/IIR filtering, adaptive equalization (LMS/CMA), and symbol slicing.
                                Conducted C++/SystemC simulation, RTL verification, and synthesis-driven
                                optimization to meet throughput and timing targets.</div>
-    
-    <div class="intro-box"><b>Digital Design Project (University)</b><br>Modeled and verified a simple processor core using SystemVerilog as part of 
-                              an IC design course. Got familiar with SystemVerilog and the design 
+
+    <div class="card"><b>Digital Design Project (University)</b><br>Modeled and verified a simple processor core using SystemVerilog as part of
+                              an IC design course. Got familiar with SystemVerilog and the design
                               flow of digital IC design & verification </div>
 
-    <a class="github-link" href="https://github.com/JesseOinonen" target="_blank">View projects on GitHub</a>
+    <div class="github-wrap">
+      <a class="github-link" href="https://github.com/JesseOinonen" target="_blank" rel="noopener">VIEW PROJECTS ON GITHUB →</a>
+    </div>
   </div>
 </section>
 
-<!-- CONTACT -->
+<!-- ============ CONTACT ============ -->
 <section id="section4">
-  <div class="animated">Contact</div>
-  <div class="glass-box">📧 jesse.oinonen25@gmail.com</div>
-  <div class="glass-box">📍 Turku, Finland</div>
+  <div class="sec-head">
+    <span class="sec-addr">0x03 //</span>
+    <h2>Contact</h2>
+    <span class="sec-line"></span>
+  </div>
+  <div class="card">📧 <a href="mailto:jesse.oinonen25@gmail.com" style="color:var(--cyan); text-decoration:none;">jesse.oinonen25@gmail.com</a></div>
+  <div class="card">📍 Turku, Finland</div>
+  <div class="eof">// END OF DIE — TAPE-OUT COMPLETE ✓</div>
 </section>
 
+</main>
+
 <footer>
-  © 2026 Oinonen Consulting
+  © 2026 Oinonen Consulting · <span>synthesized &amp; timing-closed</span>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
 <script>
 gsap.registerPlugin(ScrollTrigger);
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SVGNS = "http://www.w3.org/2000/svg";
 
-/* ===== Hero / Intro ===== */
-gsap.from("#section1 .animated", {
-  opacity: 0,
-  y: 30,
-  duration: 1,
-  ease: "power2.out"
-});
+/* ============================================================
+   Procedurally build die decorations: pad ring, CLB grid, SRAM
+   ============================================================ */
+(function buildDie() {
+  const make = (tag, attrs, parent) => {
+    const el = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    parent.appendChild(el);
+    return el;
+  };
 
-gsap.from("#section1 .intro-box", {
-  opacity: 0,
-  y: 20,
-  duration: 0.8,
-  stagger: 0.15,
-  ease: "power2.out"
-});
+  // --- I/O pad ring around the substrate ---
+  const padRing = document.getElementById('padRing');
+  for (let x = 110; x <= 1460; x += 54) {
+    make('rect', { class: 'pad', x, y: 32, width: 26, height: 14, rx: 2 }, padRing);
+    make('rect', { class: 'pad', x, y: 1154, width: 26, height: 14, rx: 2 }, padRing);
+  }
+  for (let y = 100; y <= 1080; y += 54) {
+    make('rect', { class: 'pad', x: 42, y, width: 14, height: 26, rx: 2 }, padRing);
+    make('rect', { class: 'pad', x: 1544, y, width: 14, height: 26, rx: 2 }, padRing);
+  }
 
-/* ===== Section titles ===== */
-gsap.utils.toArray(".animated").forEach(title => {
-  gsap.from(title, {
-    scrollTrigger: {
-      trigger: title,
-      start: "top 80%"
-    },
-    opacity: 0,
-    y: 20,
-    duration: 0.8,
-    ease: "power2.out"
+  // --- CLB grid inside the FPGA fabric block ---
+  const clbGrid = document.getElementById('clbGrid');
+  let i = 0;
+  for (let y = 330; y <= 680; y += 52) {
+    for (let x = 870; x <= 1280; x += 52) {
+      const lit = (i * 7 + 3) % 11 < 3; // pseudo-random "configured" cells
+      make('rect', { class: lit ? 'clb-core' : 'clb', x, y, width: 36, height: 36, rx: 3 }, clbGrid);
+      make('rect', { class: 'blk-inner', x: x + 11, y: y + 11, width: 14, height: 14 }, clbGrid);
+      i++;
+    }
+  }
+
+  // --- SRAM banks ---
+  const sram = document.getElementById('sramBanks');
+  for (let y = 690; y <= 860; y += 24) {
+    make('rect', { class: 'blk-inner', x: 525, y, width: 230, height: 14, rx: 2 }, sram);
+  }
+})();
+
+/* ============================================================
+   CHIP CAMERA — scroll-scrubbed viewBox flight across the die
+   Hero: full die → About: RV32I core → Experience: FPGA fabric
+   (with a slow pan toward SRAM/peripherals) → Contact: pull out
+   ============================================================ */
+const die = document.getElementById('die');
+
+if (!reduceMotion) {
+  // Initial "power-on" zoom from far out to the full-die view
+  gsap.fromTo(die,
+    { attr: { viewBox: '-400 -300 2400 1800' }, opacity: 0 },
+    { attr: { viewBox: '0 0 1600 1200' }, opacity: 0.9, duration: 1.8, ease: 'power3.out' }
+  );
+
+  const flyTo = (trigger, viewBox, opts = {}) => {
+    gsap.to(die, {
+      attr: { viewBox },
+      ease: 'none',
+      immediateRender: false,
+      scrollTrigger: {
+        trigger,
+        start: opts.start || 'top bottom',
+        end: opts.end || 'top top',
+        scrub: 1.2
+      }
+    });
+  };
+
+  // About: dive into the RISC-V core + PLL
+  flyTo('#section3', '40 30 760 570');
+  // Experience: pan over to the FPGA fabric / DDR side
+  flyTo('#section5', '720 200 760 570');
+  // ...and drift slowly down toward SRAM + peripherals while reading
+  flyTo('#section5', '560 420 800 600', { start: 'top top', end: 'bottom bottom' });
+  // Contact: pull back out to the whole die
+  flyTo('#section4', '-60 -45 1720 1290');
+} else {
+  die.setAttribute('viewBox', '0 0 1600 1200');
+}
+
+/* ============================================================
+   HUD — region name per section + scroll-derived address
+   ============================================================ */
+const hudRegion = document.getElementById('hudRegion');
+const regions = [
+  ['#section1', 'FULL_DIE'],
+  ['#section3', 'RV32I_CORE'],
+  ['#section5', 'FPGA_FABRIC'],
+  ['#section4', 'IO_RING']
+];
+regions.forEach(([sel, name]) => {
+  ScrollTrigger.create({
+    trigger: sel,
+    start: 'top 55%',
+    end: 'bottom 55%',
+    onToggle: self => { if (self.isActive) hudRegion.textContent = name; }
   });
 });
 
-/* ===== Content boxes ===== */
-gsap.utils.toArray(".intro-box, .glass-box").forEach(box => {
-  gsap.from(box, {
-    scrollTrigger: {
-      trigger: box,
-      start: "top 85%"
-    },
-    opacity: 0,
-    y: 20,
-    duration: 0.7,
-    ease: "power2.out"
+const hudAddr = document.getElementById('hudAddr');
+const busbar = document.getElementById('busbar');
+let hudTick = false;
+window.addEventListener('scroll', () => {
+  if (hudTick) return;
+  hudTick = true;
+  requestAnimationFrame(() => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    const p = max > 0 ? scrollY / max : 0;
+    hudAddr.textContent = '0x' + Math.round(p * 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+    busbar.style.transform = `scaleX(${p})`;
+    hudTick = false;
+  });
+}, { passive: true });
+
+/* ============================================================
+   CONTENT REVEAL ANIMATIONS
+   ============================================================ */
+// Hero entrance
+gsap.from('.hero-tag, .hero-title, .hero-sub', {
+  opacity: 0, y: 30, duration: 1, stagger: 0.15, ease: 'power3.out', delay: 0.3
+});
+gsap.from('.hero-cards .card', {
+  opacity: 0, y: 40, duration: 0.8, stagger: 0.15, ease: 'power3.out', delay: 0.9
+});
+gsap.from('.chip-tag', {
+  opacity: 0, scale: 0.6, duration: 0.5, stagger: 0.06, ease: 'back.out(2)', delay: 1.4
+});
+
+// Section headers: address types in, line draws out
+gsap.utils.toArray('.sec-head').forEach(head => {
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: head, start: 'top 80%' }
+  });
+  tl.from(head.querySelector('.sec-addr'), { opacity: 0, x: -20, duration: 0.5, ease: 'power2.out' })
+    .from(head.querySelector('h2'), { opacity: 0, y: 24, duration: 0.6, ease: 'power3.out' }, '-=0.25')
+    .from(head.querySelector('.sec-line'), { scaleX: 0, duration: 0.9, ease: 'power2.inOut' }, '-=0.4');
+});
+
+// Cards float in
+gsap.utils.toArray('main .card').forEach(card => {
+  gsap.from(card, {
+    scrollTrigger: { trigger: card, start: 'top 88%' },
+    opacity: 0, y: 36, duration: 0.8, ease: 'power3.out'
   });
 });
 
-/* ===== Timeline animation ===== */
-gsap.utils.toArray(".timeline-item").forEach((item, i) => {
+// Timeline items slide in from the bus
+gsap.utils.toArray('.timeline-item').forEach(item => {
   gsap.from(item, {
-    scrollTrigger: {
-      trigger: item,
-      start: "top 85%"
-    },
-    opacity: 0,
-    x: i % 2 === 0 ? -30 : 30,
-    duration: 0.8,
-    ease: "power2.out"
+    scrollTrigger: { trigger: item, start: 'top 85%' },
+    opacity: 0, x: -40, duration: 0.8, ease: 'power3.out'
   });
 });
 
-/* ===== Navbar subtle reveal ===== */
-gsap.from(".navbar", {
-  opacity: 0,
-  y: -20,
-  duration: 0.8,
-  ease: "power2.out"
+// Experience subtitles
+gsap.utils.toArray('.experience-subtitle').forEach(el => {
+  gsap.from(el, {
+    scrollTrigger: { trigger: el, start: 'top 85%' },
+    opacity: 0, letterSpacing: '12px', duration: 0.8, ease: 'power2.out'
+  });
 });
 
-/* ===== Hamburger ===== */
-const hamburger = document.getElementById("hamburger");
-const navLinks = document.getElementById("navLinks");
-hamburger.addEventListener("click", () => {
-  navLinks.classList.toggle("show");
+// Hours counter
+ScrollTrigger.create({
+  trigger: '#hoursCounter',
+  start: 'top 85%',
+  once: true,
+  onEnter: () => {
+    const obj = { v: 0 };
+    gsap.to(obj, {
+      v: 1000, duration: 2, ease: 'power2.out',
+      onUpdate: () => { document.getElementById('hoursCounter').textContent = Math.round(obj.v); }
+    });
+  }
 });
+
+/* ============================================================
+   NAV — active link tracking + hamburger + typed hero line
+   ============================================================ */
+regions.forEach(([sel]) => {
+  const id = sel.slice(1);
+  ScrollTrigger.create({
+    trigger: sel,
+    start: 'top 55%',
+    end: 'bottom 55%',
+    onToggle: self => {
+      if (self.isActive) {
+        document.querySelectorAll('.nav-links a').forEach(a =>
+          a.classList.toggle('active', a.dataset.sec === id));
+      }
+    }
+  });
+});
+
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('navLinks');
+hamburger.addEventListener('click', () => navLinks.classList.toggle('show'));
+navLinks.querySelectorAll('a').forEach(a =>
+  a.addEventListener('click', () => navLinks.classList.remove('show')));
+
+// Typed terminal line in the hero
+(function typeHero() {
+  const el = document.getElementById('heroTerminal');
+  const lines = [
+    '> run synthesis ... slack +0.12ns — timing met ✓',
+    '> elaborating design hierarchy ... done ✓',
+    '> uvm_test passed: 0 errors, 0 warnings ✓',
+    '> bitstream loaded — system ready ✓'
+  ];
+  if (reduceMotion) { el.textContent = lines[0]; return; }
+  let li = 0;
+  function typeLine(text, ci = 0) {
+    el.textContent = text.slice(0, ci);
+    if (ci <= text.length) {
+      setTimeout(() => typeLine(text, ci + 1), 28 + Math.random() * 35);
+    } else {
+      setTimeout(() => {
+        li = (li + 1) % lines.length;
+        typeLine(lines[li]);
+      }, 2600);
+    }
+  }
+  setTimeout(() => typeLine(lines[0]), 1200);
+})();
 </script>
 
 </body>
