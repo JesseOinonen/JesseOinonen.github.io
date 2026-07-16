@@ -13,17 +13,21 @@
   <style>
     :root {
       --bg: #05080f;
-      --bg-2: #0a101c;
-      --panel: rgba(13, 20, 34, 0.78);
       --line: rgba(56, 189, 248, 0.18);
       --cyan: #38e1ff;
       --cyan-dim: rgba(56, 225, 255, 0.55);
       --green: #4ade80;
-      --amber: #fbbf24;
       --text: #d9e4ef;
       --muted: #8da3b8;
       --mono: 'JetBrains Mono', monospace;
       --sans: 'Space Grotesk', sans-serif;
+      --glass-bg: linear-gradient(155deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03) 42%, rgba(11, 18, 32, 0.5));
+      --glass-bg-hover: linear-gradient(155deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.04) 42%, rgba(11, 18, 32, 0.46));
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-border-hover: rgba(255, 255, 255, 0.24);
+      --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 14px 34px rgba(0, 0, 0, 0.32);
+      --glass-shadow-hover: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 22px 48px rgba(0, 0, 0, 0.42);
+      --glass-blur: blur(22px) saturate(160%);
     }
 
     * { box-sizing: border-box; }
@@ -58,11 +62,10 @@
       background: radial-gradient(ellipse at 50% 40%, #0b1322 0%, var(--bg) 70%);
     }
 
-    #die {
+    #chip3d {
       width: 100%;
       height: 100%;
       display: block;
-      opacity: 0.9;
     }
 
     /* Readability vignette over the die */
@@ -76,44 +79,34 @@
       pointer-events: none;
     }
 
-    /* SVG element styles */
-    .substrate { fill: url(#gridPat); stroke: rgba(56, 189, 248, 0.25); stroke-width: 2; }
-    .blk { fill: rgba(15, 26, 44, 0.85); stroke: rgba(56, 225, 255, 0.4); stroke-width: 1.6; }
-    .blk-inner { fill: none; stroke: rgba(56, 225, 255, 0.16); stroke-width: 1; }
-    .blk-label {
-      font-family: var(--mono);
-      font-size: 22px;
-      letter-spacing: 4px;
-      fill: rgba(141, 215, 235, 0.85);
+    /* Fine silicon grain, sits between the die and the vignette */
+    #chip-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      filter: url(#grainFilter);
+      mix-blend-mode: overlay;
+      opacity: 0.5;
+      pointer-events: none;
     }
-    .blk-sub {
-      font-family: var(--mono);
-      font-size: 13px;
-      letter-spacing: 2px;
-      fill: rgba(141, 163, 184, 0.65);
+
+    /* Slow raking-light sweep across the die, like light catching a die photo */
+    #die-sheen {
+      position: absolute;
+      inset: -20% -60%;
+      z-index: 2;
+      background: linear-gradient(115deg, transparent 40%, rgba(217, 168, 102, 0.05) 47%, rgba(56, 225, 255, 0.09) 50%, rgba(217, 168, 102, 0.05) 53%, transparent 60%);
+      transform: translateX(-30%);
+      animation: sheen-sweep 14s ease-in-out infinite;
+      pointer-events: none;
     }
-    .trace { fill: none; stroke: rgba(56, 189, 248, 0.28); stroke-width: 2.5; }
-    .trace-glow { fill: none; stroke: rgba(56, 189, 248, 0.07); stroke-width: 8; }
-    .pulse {
-      fill: none;
-      stroke: var(--cyan);
-      stroke-width: 3;
-      stroke-linecap: round;
-      stroke-dasharray: 55 945;
-      animation: flow var(--d, 4s) linear infinite;
-      animation-delay: var(--delay, 0s);
+    @keyframes sheen-sweep {
+      0%, 100% { transform: translateX(-35%); }
+      50% { transform: translateX(35%); }
     }
-    .pulse.g { stroke: var(--green); }
-    .pulse.a { stroke: var(--amber); }
-    @keyframes flow {
-      from { stroke-dashoffset: 1000; }
-      to   { stroke-dashoffset: 0; }
-    }
-    .via { fill: #0c1626; stroke: rgba(56, 225, 255, 0.5); stroke-width: 1.5; }
-    .pad { fill: rgba(56, 189, 248, 0.18); stroke: rgba(56, 225, 255, 0.35); stroke-width: 1; }
-    .clb { fill: rgba(13, 23, 40, 0.9); stroke: rgba(56, 225, 255, 0.28); stroke-width: 1; }
-    .clb-core { fill: rgba(56, 225, 255, 0.12); stroke: rgba(56, 225, 255, 0.35); stroke-width: 1; }
-    .led { animation: blink var(--bd, 2s) steps(1) infinite; }
+    @media (prefers-reduced-motion: reduce) { #die-sheen { display: none; } }
+
     @keyframes blink { 0%, 60% { opacity: 1; } 60.1%, 100% { opacity: 0.15; } }
 
     /* ================= PROGRESS BAR ================= */
@@ -285,18 +278,6 @@
       justify-content: center;
     }
 
-    .hero-tag {
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      letter-spacing: 3px;
-      color: var(--green);
-      border: 1px solid rgba(74, 222, 128, 0.3);
-      border-radius: 999px;
-      padding: 0.4rem 1.1rem;
-      margin-bottom: 1.6rem;
-      background: rgba(74, 222, 128, 0.06);
-    }
-
     .hero-title {
       font-size: clamp(2.4rem, 7vw, 5rem);
       font-weight: 700;
@@ -313,22 +294,9 @@
       font-size: clamp(1.05rem, 2.5vw, 1.5rem);
       color: var(--muted);
       letter-spacing: 1px;
-      margin-bottom: 2.2rem;
+      margin-bottom: 3.2rem;
     }
     .hero-sub b { color: var(--text); }
-
-    .hero-terminal {
-      font-family: var(--mono);
-      font-size: 0.85rem;
-      color: var(--green);
-      min-height: 1.4em;
-      margin-bottom: 2.4rem;
-      letter-spacing: 0.5px;
-    }
-    .hero-terminal::after {
-      content: "▌";
-      animation: blink 1s steps(1) infinite;
-    }
 
     .hero-cards {
       display: flex;
@@ -350,15 +318,15 @@
       font-size: 0.75rem;
       letter-spacing: 1px;
       color: var(--cyan);
-      border: 1px solid rgba(56, 225, 255, 0.3);
-      background: rgba(56, 225, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
       padding: 0.4rem 0.9rem;
-      border-radius: 6px;
-      transition: background 0.25s, box-shadow 0.25s, transform 0.25s;
+      border-radius: 999px;
+      transition: background 0.25s, border-color 0.25s, transform 0.25s;
     }
     .chip-tag:hover {
-      background: rgba(56, 225, 255, 0.14);
-      box-shadow: 0 0 18px rgba(56, 225, 255, 0.25);
+      background: rgba(56, 225, 255, 0.1);
+      border-color: rgba(56, 225, 255, 0.35);
       transform: translateY(-2px);
     }
 
@@ -397,50 +365,48 @@
     /* ================= CARDS ================= */
     .card {
       position: relative;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 1.3rem 1.8rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 1.5rem 1.9rem;
       max-width: 840px;
       width: 100%;
       margin: 0.6rem 0;
-      backdrop-filter: blur(10px);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
       text-align: left;
       line-height: 1.65;
       color: var(--text);
-      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+      box-shadow: var(--glass-shadow);
+      transition: border-color 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease, background 0.35s ease;
     }
     .card:hover {
-      border-color: rgba(56, 225, 255, 0.45);
-      box-shadow: 0 0 30px rgba(56, 225, 255, 0.1), 0 18px 40px rgba(0, 0, 0, 0.4);
-      transform: translateY(-3px);
+      border-color: var(--glass-border-hover);
+      background: var(--glass-bg-hover);
+      box-shadow: var(--glass-shadow-hover);
+      transform: translateY(-2px);
     }
-    /* corner brackets like probe pads */
-    .card::before, .card::after {
-      content: "";
-      position: absolute;
-      width: 14px; height: 14px;
-      border-color: var(--cyan);
-      border-style: solid;
-      opacity: 0.55;
-      transition: opacity 0.3s;
-    }
-    .card::before {
-      top: -1px; left: -1px;
-      border-width: 2px 0 0 2px;
-      border-radius: 4px 0 0 0;
-    }
-    .card::after {
-      bottom: -1px; right: -1px;
-      border-width: 0 2px 2px 0;
-      border-radius: 0 0 4px 0;
-    }
-    .card:hover::before, .card:hover::after { opacity: 1; }
 
-    .card b { color: var(--cyan); letter-spacing: 0.5px; }
+    .card b { color: var(--cyan); letter-spacing: 0.2px; font-weight: 600; }
 
-    .hero-cards .card { max-width: 300px; text-align: center; font-size: 0.95rem; color: var(--muted); }
+    .hero-cards .card {
+      max-width: 300px;
+      text-align: center;
+      font-size: 0.95rem;
+      color: var(--muted);
+      cursor: pointer;
+    }
     .hero-cards .card strong { display: block; color: var(--text); font-size: 1.02rem; margin-bottom: 0.4rem; }
+    .hero-cards .card:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+    .hero-cards .card .hero-card-hint {
+      display: block;
+      margin-top: 0.7rem;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 1.5px;
+      color: var(--cyan-dim);
+      opacity: 0.8;
+    }
 
     /* ================= ABOUT ================= */
     .about-grid {
@@ -467,8 +433,8 @@
 
     .skill-list { list-style: none; margin: 0; padding: 0; }
     .skill-list li {
-      padding: 0.45rem 0;
-      border-bottom: 1px dashed rgba(56, 189, 248, 0.12);
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       color: var(--text);
       display: flex;
       align-items: center;
@@ -524,56 +490,48 @@
 
     .timeline {
       position: relative;
-      padding-left: 44px;
+      padding-left: 40px;
     }
     /* the bus */
     .timeline::before {
       content: "";
       position: absolute;
-      left: 15px;
+      left: 13px;
       top: 6px;
       bottom: 6px;
       width: 2px;
-      background: linear-gradient(180deg, var(--cyan), rgba(56, 189, 248, 0.15));
-      box-shadow: 0 0 10px rgba(56, 225, 255, 0.3);
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.5), rgba(56, 189, 248, 0.08));
     }
 
-    .timeline-item { position: relative; margin-bottom: 2.2rem; }
+    .timeline-item { position: relative; margin-bottom: 2rem; }
     /* via node */
     .timeline-item::before {
       content: "";
       position: absolute;
-      left: -36px;
-      top: 22px;
-      width: 12px; height: 12px;
+      left: -34px;
+      top: 24px;
+      width: 10px; height: 10px;
       border-radius: 50%;
       background: var(--bg);
       border: 2px solid var(--cyan);
-      box-shadow: 0 0 12px rgba(56, 225, 255, 0.6);
-    }
-    /* stub trace into the card */
-    .timeline-item::after {
-      content: "";
-      position: absolute;
-      left: -22px;
-      top: 28px;
-      width: 22px;
-      height: 1px;
-      background: rgba(56, 225, 255, 0.35);
+      box-shadow: 0 0 8px rgba(56, 225, 255, 0.4);
     }
 
     .timeline-content {
       position: relative;
-      background: var(--panel);
-      backdrop-filter: blur(10px);
-      padding: 1.2rem 1.6rem;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      transition: border-color 0.3s, box-shadow 0.3s;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      padding: 1.3rem 1.7rem;
+      border-radius: 18px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
     }
     .timeline-content:hover {
-      border-color: rgba(56, 225, 255, 0.45);
-      box-shadow: 0 0 26px rgba(56, 225, 255, 0.1);
+      border-color: var(--glass-border-hover);
+      background: var(--glass-bg-hover);
+      box-shadow: var(--glass-shadow-hover);
     }
 
     .timeline-title { font-weight: 700; font-size: 1.15rem; color: var(--text); }
@@ -607,6 +565,83 @@
     }
     .github-wrap { text-align: center; }
 
+    /* ================= SKILL TREE MODAL ================= */
+    .skill-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5vh 1.2rem;
+      background: rgba(5, 8, 15, 0.72);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease;
+    }
+    .skill-modal-overlay.open { opacity: 1; visibility: visible; }
+
+    .skill-modal {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      max-height: 84vh;
+      overflow-y: auto;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 22px;
+      padding: 2rem 2.2rem;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: var(--glass-shadow), 0 30px 70px rgba(0, 0, 0, 0.5);
+      transform: translateY(14px) scale(0.98);
+      transition: transform 0.3s ease;
+    }
+    .skill-modal-overlay.open .skill-modal { transform: translateY(0) scale(1); }
+
+    .skill-modal h3 { margin: 0.2rem 0 1.4rem; font-size: 1.5rem; letter-spacing: 0.5px; }
+
+    .skill-modal-close {
+      position: absolute;
+      top: 1.3rem; right: 1.3rem;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .skill-modal-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+
+    .skill-tree { display: flex; flex-direction: column; gap: 0; }
+    .skill-node {
+      position: relative;
+      padding: 1.1rem 0 1.1rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .skill-node:last-child { border-bottom: none; }
+    .skill-node::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 1.5rem;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px solid var(--cyan);
+    }
+    .skill-node-title { font-weight: 700; color: var(--text); font-size: 1rem; }
+    .skill-node-meta {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.5px;
+      color: var(--green);
+      margin-top: 0.15rem;
+    }
+    .skill-node-detail { color: var(--muted); margin-top: 0.5rem; line-height: 1.6; font-size: 0.93rem; }
+
     /* ================= CONTACT ================= */
     #section4 { text-align: center; }
     #section4 .card { text-align: center; max-width: 480px; font-size: 1.1rem; }
@@ -638,7 +673,7 @@
 
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
-      .pulse, .led, .scroll-hint .wire::after, .hero-terminal::after, #hud .cursor { animation: none; }
+      .scroll-hint .wire::after, #hud .cursor { animation: none; }
       html { scroll-behavior: auto; }
     }
   </style>
@@ -648,177 +683,21 @@
 
 <div id="top"></div>
 
+<!-- Hidden filter defs used by the die's grain overlay (CSS filter: url(#grainFilter)) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="grainFilter">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" result="noise"/>
+    <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.4 0"/>
+  </filter>
+</svg>
+
 <!-- Scroll progress "bus" -->
 <div id="busbar"></div>
 
-<!-- ============ FIXED CHIP DIE BACKGROUND ============ -->
+<!-- ============ FIXED 3D CHIP BACKGROUND ============ -->
 <div id="chip-stage" aria-hidden="true">
-  <svg id="die" viewBox="0 0 1600 1200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <pattern id="gridPat" width="40" height="40" patternUnits="userSpaceOnUse">
-        <rect width="40" height="40" fill="#070d18"/>
-        <path d="M40 0H0V40" fill="none" stroke="rgba(56,189,248,0.05)" stroke-width="1"/>
-      </pattern>
-      <pattern id="hatch" width="14" height="14" patternUnits="userSpaceOnUse">
-        <path d="M0 14L14 0" stroke="rgba(56,225,255,0.08)" stroke-width="1"/>
-      </pattern>
-      <linearGradient id="busGrad" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="rgba(56,225,255,0.22)"/>
-        <stop offset="1" stop-color="rgba(74,222,128,0.18)"/>
-      </linearGradient>
-    </defs>
-
-    <!-- substrate -->
-    <rect class="substrate" x="60" y="50" width="1480" height="1100" rx="14"/>
-
-    <!-- generated pad ring / CLBs / vias injected here -->
-    <g id="padRing"></g>
-
-    <!-- ====== TRACES (glow underlay, line, pulse overlay) ====== -->
-    <g id="traces">
-      <!-- core -> AXI -->
-      <path class="trace-glow" d="M370 470 V540"/>
-      <path class="trace" d="M370 470 V540"/>
-      <path class="pulse" d="M370 470 V540" pathLength="1000" style="--d:3.2s"/>
-      <!-- AXI -> fabric -->
-      <path class="trace-glow" d="M780 568 H840"/>
-      <path class="trace" d="M780 568 H840"/>
-      <path class="pulse g" d="M780 568 H840" pathLength="1000" style="--d:2.6s; --delay:.5s"/>
-      <!-- PLL -> AXI -->
-      <path class="trace-glow" d="M730 250 V540"/>
-      <path class="trace" d="M730 250 V540"/>
-      <path class="pulse a" d="M730 250 V540" pathLength="1000" style="--d:4.5s; --delay:1.2s"/>
-      <!-- core -> fabric (data highway) -->
-      <path class="trace-glow" d="M620 290 H840"/>
-      <path class="trace" d="M620 290 H840"/>
-      <path class="pulse" d="M620 290 H840" pathLength="1000" style="--d:3.8s; --delay:.8s"/>
-      <path class="pulse g" d="M620 320 H840" pathLength="1000" style="--d:3.1s; --delay:1.9s"/>
-      <path class="trace" d="M620 320 H840"/>
-      <!-- fabric -> DDR -->
-      <path class="trace-glow" d="M1340 480 H1380"/>
-      <path class="trace" d="M1340 480 H1380"/>
-      <path class="pulse" d="M1340 480 H1380" pathLength="1000" style="--d:2.2s; --delay:.3s"/>
-      <path class="trace" d="M1340 540 H1380"/>
-      <path class="pulse g" d="M1340 540 H1380" pathLength="1000" style="--d:2.4s; --delay:1.4s"/>
-      <!-- fabric -> IO ctrl -->
-      <path class="trace-glow" d="M1090 740 V800"/>
-      <path class="trace" d="M1090 740 V800"/>
-      <path class="pulse a" d="M1090 740 V800" pathLength="1000" style="--d:3s; --delay:2.1s"/>
-      <!-- DSP -> AXI -->
-      <path class="trace-glow" d="M280 660 V596"/>
-      <path class="trace" d="M280 660 V596"/>
-      <path class="pulse g" d="M280 660 V596" pathLength="1000" style="--d:3.4s; --delay:.9s"/>
-      <!-- SRAM -> AXI -->
-      <path class="trace-glow" d="M640 660 V596"/>
-      <path class="trace" d="M640 660 V596"/>
-      <path class="pulse" d="M640 660 V596" pathLength="1000" style="--d:2.8s; --delay:1.7s"/>
-      <!-- DDR -> IO ctrl, around the edge -->
-      <path class="trace-glow" d="M1440 650 V880 H1340"/>
-      <path class="trace" d="M1440 650 V880 H1340"/>
-      <path class="pulse a" d="M1440 650 V880 H1340" pathLength="1000" style="--d:5s; --delay:.4s"/>
-      <!-- long diagnostic loop core -> DSP -->
-      <path class="trace-glow" d="M180 470 V620 H120 V760 H120"/>
-      <path class="trace" d="M180 470 V620 H100 V780 H120"/>
-      <path class="pulse" d="M180 470 V620 H100 V780 H120" pathLength="1000" style="--d:6s; --delay:2.6s"/>
-    </g>
-
-    <!-- ====== BLOCKS ====== -->
-    <g id="blocks">
-      <!-- RISC-V CORE -->
-      <g id="blk-core">
-        <rect class="blk" x="120" y="110" width="500" height="360" rx="8"/>
-        <rect x="124" y="114" width="492" height="352" rx="6" fill="url(#hatch)"/>
-        <rect class="blk-inner" x="150" y="150" width="200" height="120" rx="4"/>
-        <text class="blk-sub" x="160" y="175">ALU</text>
-        <rect class="blk-inner" x="370" y="150" width="220" height="120" rx="4"/>
-        <text class="blk-sub" x="380" y="175">DECODE / FETCH</text>
-        <rect class="blk-inner" x="150" y="290" width="200" height="130" rx="4"/>
-        <text class="blk-sub" x="160" y="315">REG FILE x32</text>
-        <rect class="blk-inner" x="370" y="290" width="220" height="130" rx="4"/>
-        <text class="blk-sub" x="380" y="315">LSU / CSR</text>
-        <text class="blk-label" x="370" y="98" text-anchor="middle">RV32I CORE</text>
-        <circle class="led" cx="600" cy="132" r="5" fill="#4ade80" style="--bd:1.6s"/>
-      </g>
-
-      <!-- PLL -->
-      <g id="blk-pll">
-        <rect class="blk" x="660" y="110" width="140" height="140" rx="8"/>
-        <circle class="blk-inner" cx="730" cy="180" r="40"/>
-        <circle class="blk-inner" cx="730" cy="180" r="22"/>
-        <text class="blk-label" x="730" y="98" text-anchor="middle" font-size="18">PLL</text>
-        <circle class="led" cx="784" cy="128" r="4" fill="#fbbf24" style="--bd:0.9s"/>
-      </g>
-
-      <!-- DDR PHY -->
-      <g id="blk-ddr">
-        <rect class="blk" x="1380" y="110" width="120" height="540" rx="8"/>
-        <text class="blk-label" x="1440" y="390" text-anchor="middle" font-size="20" transform="rotate(90 1440 390)">DDR&#160;PHY</text>
-        <circle class="led" cx="1440" cy="140" r="4" fill="#38e1ff" style="--bd:1.2s"/>
-      </g>
-
-      <!-- FPGA FABRIC -->
-      <g id="blk-fabric">
-        <rect class="blk" x="840" y="300" width="500" height="440" rx="8"/>
-        <g id="clbGrid"></g>
-        <text class="blk-label" x="1090" y="288" text-anchor="middle">FPGA FABRIC</text>
-        <circle class="led" cx="1320" cy="322" r="5" fill="#4ade80" style="--bd:2.3s"/>
-      </g>
-
-      <!-- AXI INTERCONNECT -->
-      <g id="blk-axi">
-        <rect class="blk" x="120" y="540" width="660" height="56" rx="6" fill="url(#busGrad)"/>
-        <text class="blk-sub" x="450" y="574" text-anchor="middle" font-size="18" letter-spacing="6">AXI4 INTERCONNECT</text>
-      </g>
-
-      <!-- DSP -->
-      <g id="blk-dsp">
-        <rect class="blk" x="120" y="660" width="320" height="240" rx="8"/>
-        <rect x="124" y="664" width="312" height="232" rx="6" fill="url(#hatch)"/>
-        <rect class="blk-inner" x="150" y="700" width="120" height="70" rx="4"/>
-        <text class="blk-sub" x="160" y="725">FIR</text>
-        <rect class="blk-inner" x="290" y="700" width="120" height="70" rx="4"/>
-        <text class="blk-sub" x="300" y="725">NCO</text>
-        <rect class="blk-inner" x="150" y="800" width="260" height="70" rx="4"/>
-        <text class="blk-sub" x="160" y="825">MAC ARRAY</text>
-        <text class="blk-label" x="280" y="940" text-anchor="middle" font-size="18">DSP / QAM</text>
-      </g>
-
-      <!-- SRAM -->
-      <g id="blk-sram">
-        <rect class="blk" x="500" y="660" width="280" height="240" rx="8"/>
-        <g id="sramBanks"></g>
-        <text class="blk-label" x="640" y="940" text-anchor="middle" font-size="18">SRAM</text>
-      </g>
-
-      <!-- IO controller -->
-      <g id="blk-io">
-        <rect class="blk" x="840" y="800" width="500" height="160" rx="8"/>
-        <rect class="blk-inner" x="870" y="830" width="130" height="100" rx="4"/>
-        <text class="blk-sub" x="885" y="885" font-size="16">I2S</text>
-        <rect class="blk-inner" x="1025" y="830" width="130" height="100" rx="4"/>
-        <text class="blk-sub" x="1040" y="885" font-size="16">UART</text>
-        <rect class="blk-inner" x="1180" y="830" width="130" height="100" rx="4"/>
-        <text class="blk-sub" x="1195" y="885" font-size="16">GPIO</text>
-        <text class="blk-label" x="1090" y="1000" text-anchor="middle" font-size="18">PERIPHERALS</text>
-        <circle class="led" cx="1320" cy="822" r="4" fill="#fbbf24" style="--bd:1.4s"/>
-      </g>
-
-      <!-- silkscreen-ish labels -->
-      <text class="blk-sub" x="120" y="1080" font-size="16" letter-spacing="4">OINONEN-SOC REV-A · 28nm · TURKU.FI</text>
-      <text class="blk-sub" x="1500" y="1080" font-size="16" text-anchor="end" letter-spacing="4">JTAG OK · CLK 200MHz</text>
-    </g>
-
-    <g id="vias">
-      <circle class="via" cx="730" cy="250" r="6"/>
-      <circle class="via" cx="370" cy="470" r="6"/>
-      <circle class="via" cx="280" cy="660" r="6"/>
-      <circle class="via" cx="640" cy="660" r="6"/>
-      <circle class="via" cx="1090" cy="740" r="6"/>
-      <circle class="via" cx="1440" cy="880" r="6"/>
-      <circle class="via" cx="100" cy="620" r="5"/>
-      <circle class="via" cx="100" cy="780" r="5"/>
-    </g>
-  </svg>
+  <div id="die-sheen"></div>
+  <canvas id="chip3d"></canvas>
 </div>
 
 <!-- ============ HUD ============ -->
@@ -832,7 +711,7 @@
   <div class="navbar-inner">
     <div class="nav-left">
       <a href="#top"><img src="logo.png" alt="Oinonen Consulting logo"></a>
-      <a class="nav-brand" href="#top">OINONEN<span>::</span>CONSULTING</a>
+      <a class="nav-brand" href="#top">OINONEN CONSULTING</a>
     </div>
     <div class="nav-center">
       <div class="nav-links" id="navLinks">
@@ -852,15 +731,13 @@
 
 <!-- ============ INTRO ============ -->
 <section id="section1">
-  <div class="hero-tag">● SYSTEM ONLINE — ACCEPTING NEW PROJECTS</div>
   <h1 class="hero-title">OINONEN<br>CONSULTING</h1>
   <div class="hero-sub"><b>FPGA, SoC &amp; ASIC</b> — Design &amp; Verification</div>
-  <div class="hero-terminal" id="heroTerminal"></div>
 
   <div class="hero-cards">
-    <div class="card"><strong>Digital IC Design</strong>Digital IC designer with strong experience in SoC development, RTL design, verification, and FPGA implementation.</div>
-    <div class="card"><strong>Industry + Academia</strong>Combining industry-grade IC R&amp;D work with solid academic background.</div>
-    <div class="card"><strong>Consulting Areas</strong>VHDL / SystemVerilog, UVM, FPGA prototyping, Python tooling</div>
+    <div class="card" tabindex="0" role="button" aria-haspopup="dialog" data-tree="icdesign"><strong>Digital IC Design</strong>Digital IC designer with strong experience in SoC development, RTL design, verification, and FPGA implementation.<span class="hero-card-hint">VIEW SKILL TREE →</span></div>
+    <div class="card" tabindex="0" role="button" aria-haspopup="dialog" data-tree="industry"><strong>Industry + Academia</strong>Combining industry-grade IC R&amp;D work with solid academic background.<span class="hero-card-hint">VIEW SKILL TREE →</span></div>
+    <div class="card" tabindex="0" role="button" aria-haspopup="dialog" data-tree="consulting"><strong>Consulting Areas</strong>VHDL / SystemVerilog, UVM, FPGA prototyping, Python tooling<span class="hero-card-hint">VIEW SKILL TREE →</span></div>
   </div>
 
   <div class="chip-tagrow">
@@ -874,7 +751,7 @@
   </div>
 
   <div class="scroll-hint">
-    <span>SCROLL TO EXPLORE THE DIE</span>
+    <span>SCROLL TO EXPLORE MORE</span>
     <span class="wire"></span>
   </div>
 </section>
@@ -911,7 +788,7 @@
 
     <div class="card stat-card">
       <div class="stat-num"><span id="hoursCounter">0</span>+</div>
-      <div class="stat-desc">hours of hands-on digital design &amp; verification experience</div>
+      <div class="stat-desc">years of hands-on digital design &amp; verification experience</div>
     </div>
   </div>
 </section>
@@ -929,6 +806,15 @@
     <div class="experience-subtitle">Industry experience</div>
 
     <div class="timeline">
+
+      <div class="timeline-item">
+        <div class="timeline-content">
+          <div class="timeline-title">LG Electronics</div>
+          <div class="timeline-role">Digital IC Engineer Trainee</div>
+          <div class="timeline-date">08/2026 - </div>
+          <div class="timeline-role">Thesis work.</div>
+        </div>
+      </div>
 
       <div class="timeline-item">
         <div class="timeline-content">
@@ -990,11 +876,6 @@
                            Implements an AXI-Stream–based processing pipeline with zero-copy DMA for low-latency data movement between PS and PL.
                            Includes a reusable observability IP for real-time measurement of throughput, latency, and error statistics, enabling performance-aware system design and verification.</div>
 
-    <div class="card"><b>RISC-V + AI accelerator Zynq Soc (Own project)</b><br> Currently under development.
-                           A compact, FPGA-based AI accelerator designed to offload compute-intensive operations from an RV32I core.
-                           Implements a systolic array architecture for efficient matrix and vector computations, enabling fast linear algebra and lightweight ML tasks.
-                           Controlled and sequenced by the RISC-V processor, providing seamless integration into the Zynq-7000 SoC. </div>
-
     <div class="card"><b>RISC-V Space Applications (Bachelor's thesis)</b><br> Bachelor's thesis that examines the suitability of the RISC-V instruction set
                            architecture for space applications in the evolving space technology industry,
                            and its advantages compared to other closed instruction set architecture
@@ -1032,13 +913,22 @@
   </div>
   <div class="card">📧 <a href="mailto:jesse.oinonen25@gmail.com" style="color:var(--cyan); text-decoration:none;">jesse.oinonen25@gmail.com</a></div>
   <div class="card">📍 Turku, Finland</div>
-  <div class="eof">// END OF DIE — TAPE-OUT COMPLETE ✓</div>
 </section>
 
 </main>
 
+<!-- ============ SKILL TREE MODAL ============ -->
+<div class="skill-modal-overlay" id="skillModalOverlay">
+  <div class="skill-modal" role="dialog" aria-modal="true" aria-labelledby="skillModalTitle">
+    <button class="skill-modal-close" id="skillModalClose" type="button" aria-label="Close">✕</button>
+    <div class="card-label" id="skillModalLabel">SKILL.TREE</div>
+    <h3 id="skillModalTitle"></h3>
+    <div class="skill-tree" id="skillTreeContent"></div>
+  </div>
+</div>
+
 <footer>
-  © 2026 Oinonen Consulting · <span>synthesized &amp; timing-closed</span>
+  © 2026 Oinonen Consulting
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
@@ -1046,98 +936,16 @@
 <script>
 gsap.registerPlugin(ScrollTrigger);
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const SVGNS = "http://www.w3.org/2000/svg";
-
-/* ============================================================
-   Procedurally build die decorations: pad ring, CLB grid, SRAM
-   ============================================================ */
-(function buildDie() {
-  const make = (tag, attrs, parent) => {
-    const el = document.createElementNS(SVGNS, tag);
-    for (const k in attrs) el.setAttribute(k, attrs[k]);
-    parent.appendChild(el);
-    return el;
-  };
-
-  // --- I/O pad ring around the substrate ---
-  const padRing = document.getElementById('padRing');
-  for (let x = 110; x <= 1460; x += 54) {
-    make('rect', { class: 'pad', x, y: 32, width: 26, height: 14, rx: 2 }, padRing);
-    make('rect', { class: 'pad', x, y: 1154, width: 26, height: 14, rx: 2 }, padRing);
-  }
-  for (let y = 100; y <= 1080; y += 54) {
-    make('rect', { class: 'pad', x: 42, y, width: 14, height: 26, rx: 2 }, padRing);
-    make('rect', { class: 'pad', x: 1544, y, width: 14, height: 26, rx: 2 }, padRing);
-  }
-
-  // --- CLB grid inside the FPGA fabric block ---
-  const clbGrid = document.getElementById('clbGrid');
-  let i = 0;
-  for (let y = 330; y <= 680; y += 52) {
-    for (let x = 870; x <= 1280; x += 52) {
-      const lit = (i * 7 + 3) % 11 < 3; // pseudo-random "configured" cells
-      make('rect', { class: lit ? 'clb-core' : 'clb', x, y, width: 36, height: 36, rx: 3 }, clbGrid);
-      make('rect', { class: 'blk-inner', x: x + 11, y: y + 11, width: 14, height: 14 }, clbGrid);
-      i++;
-    }
-  }
-
-  // --- SRAM banks ---
-  const sram = document.getElementById('sramBanks');
-  for (let y = 690; y <= 860; y += 24) {
-    make('rect', { class: 'blk-inner', x: 525, y, width: 230, height: 14, rx: 2 }, sram);
-  }
-})();
-
-/* ============================================================
-   CHIP CAMERA — scroll-scrubbed viewBox flight across the die
-   Hero: full die → About: RV32I core → Experience: FPGA fabric
-   (with a slow pan toward SRAM/peripherals) → Contact: pull out
-   ============================================================ */
-const die = document.getElementById('die');
-
-if (!reduceMotion) {
-  // Initial "power-on" zoom from far out to the full-die view
-  gsap.fromTo(die,
-    { attr: { viewBox: '-400 -300 2400 1800' }, opacity: 0 },
-    { attr: { viewBox: '0 0 1600 1200' }, opacity: 0.9, duration: 1.8, ease: 'power3.out' }
-  );
-
-  const flyTo = (trigger, viewBox, opts = {}) => {
-    gsap.to(die, {
-      attr: { viewBox },
-      ease: 'none',
-      immediateRender: false,
-      scrollTrigger: {
-        trigger,
-        start: opts.start || 'top bottom',
-        end: opts.end || 'top top',
-        scrub: 1.2
-      }
-    });
-  };
-
-  // About: dive into the RISC-V core + PLL
-  flyTo('#section3', '40 30 760 570');
-  // Experience: pan over to the FPGA fabric / DDR side
-  flyTo('#section5', '720 200 760 570');
-  // ...and drift slowly down toward SRAM + peripherals while reading
-  flyTo('#section5', '560 420 800 600', { start: 'top top', end: 'bottom bottom' });
-  // Contact: pull back out to the whole die
-  flyTo('#section4', '-60 -45 1720 1290');
-} else {
-  die.setAttribute('viewBox', '0 0 1600 1200');
-}
 
 /* ============================================================
    HUD — region name per section + scroll-derived address
    ============================================================ */
 const hudRegion = document.getElementById('hudRegion');
 const regions = [
-  ['#section1', 'FULL_DIE'],
-  ['#section3', 'RV32I_CORE'],
-  ['#section5', 'FPGA_FABRIC'],
-  ['#section4', 'IO_RING']
+  ['#section1', 'FULL_VIEW'],
+  ['#section3', 'DIE_SURFACE'],
+  ['#section5', 'PIN_ARRAY'],
+  ['#section4', 'PACKAGE_VIEW']
 ];
 regions.forEach(([sel, name]) => {
   ScrollTrigger.create({
@@ -1167,7 +975,7 @@ window.addEventListener('scroll', () => {
    CONTENT REVEAL ANIMATIONS
    ============================================================ */
 // Hero entrance
-gsap.from('.hero-tag, .hero-title, .hero-sub', {
+gsap.from('.hero-title, .hero-sub', {
   opacity: 0, y: 30, duration: 1, stagger: 0.15, ease: 'power3.out', delay: 0.3
 });
 gsap.from('.hero-cards .card', {
@@ -1219,8 +1027,8 @@ ScrollTrigger.create({
   onEnter: () => {
     const obj = { v: 0 };
     gsap.to(obj, {
-      v: 1000, duration: 2, ease: 'power2.out',
-      onUpdate: () => { document.getElementById('hoursCounter').textContent = Math.round(obj.v); }
+      v: 1.5, duration: 2, ease: 'power2.out',
+      onUpdate: () => { document.getElementById('hoursCounter').textContent = obj.v.toFixed(1); }
     });
   }
 });
@@ -1249,30 +1057,273 @@ hamburger.addEventListener('click', () => navLinks.classList.toggle('show'));
 navLinks.querySelectorAll('a').forEach(a =>
   a.addEventListener('click', () => navLinks.classList.remove('show')));
 
-// Typed terminal line in the hero
-(function typeHero() {
-  const el = document.getElementById('heroTerminal');
-  const lines = [
-    '> run synthesis ... slack +0.12ns — timing met ✓',
-    '> elaborating design hierarchy ... done ✓',
-    '> uvm_test passed: 0 errors, 0 warnings ✓',
-    '> bitstream loaded — system ready ✓'
-  ];
-  if (reduceMotion) { el.textContent = lines[0]; return; }
-  let li = 0;
-  function typeLine(text, ci = 0) {
-    el.textContent = text.slice(0, ci);
-    if (ci <= text.length) {
-      setTimeout(() => typeLine(text, ci + 1), 28 + Math.random() * 35);
-    } else {
-      setTimeout(() => {
-        li = (li + 1) % lines.length;
-        typeLine(lines[li]);
-      }, 2600);
+/* ============================================================
+   SKILL TREE MODAL — hero cards expand into a sourced skill tree
+   ============================================================ */
+(function skillTree() {
+  const skillTrees = {
+    icdesign: {
+      title: 'Digital IC Design',
+      nodes: [
+        {
+          title: 'RTL Design — VHDL & SystemVerilog',
+          meta: 'LG Electronics · University of Oulu',
+          detail: 'Developed RTL functionality and branch-prediction logic for a RISC-V-based processor at LG Electronics, and migrated its bus protocol from APB to AHB. Also designed an I2S audio IP block end-to-end (SystemC → RTL) during SoC design coursework at the University of Oulu.'
+        },
+        {
+          title: 'Verification — UVM, SVA & Gate-Level Sim',
+          meta: 'LG Electronics',
+          detail: 'Built and ran UVM-based verification environments in SystemVerilog using VCS for RISC-V and UWB IP blocks, analyzed gate-level simulation results for debugging, and extended into formal verification methods on the university I2S IP project.'
+        },
+        {
+          title: 'HLS & Algorithm Modeling',
+          meta: 'University of Oulu',
+          detail: 'Designed a QAM64 demodulator in C++ using Catapult HLS — CORDIC-based NCO, adaptive equalization, symbol detection — going from functional simulation through RTL verification and design-space exploration for throughput.'
+        },
+        {
+          title: 'FPGA & SoC Bring-up',
+          meta: 'Bachelor’s thesis · Personal projects',
+          detail: 'Compiled the NOEL-V RISC-V processor to a Xilinx Vivado bitstream for a thesis on RISC-V for space applications. Currently building a Zynq-7000 FPGA-accelerated Linux dataplane and a 5-stage pipelined RV32I core with branch prediction as personal projects.'
+        }
+      ]
+    },
+    industry: {
+      title: 'Industry + Academia',
+      nodes: [
+        {
+          title: 'LG Electronics Finland Lab — Thesis Worker',
+          meta: 'Aug 2026 – present',
+          detail: 'Continuing into thesis work in digital IC design after a full year as a trainee on the same team.'
+        },
+        {
+          title: 'LG Electronics Finland Lab — Digital IC Design Trainee',
+          meta: 'Jan 2025 – Dec 2025',
+          detail: 'RISC-V processor RTL & UVM verification, UWB RX/TX digital blocks, branch prediction, APB→AHB bus migration, Python test automation, and gate-level debugging in a daily Linux + Git workflow.'
+        },
+        {
+          title: 'University of Turku — Research & Teaching Assistant',
+          meta: 'Feb 2026 – present',
+          detail: 'Designed lab exercises and lecture material for the M.Sc. courses "FPGA for Embedded Systems" and "System Modelling and Synthesis with HDL"; supervised labs, demos and workshops.'
+        },
+        {
+          title: 'Abloy — R&D Trainee, Electronics',
+          meta: 'Jun 2024 – Aug 2024',
+          detail: 'Built a contact-resistance measurement setup for key-lock communication, an automated RSSI data-collection system with Gage R&R analysis, and Python converters to migrate legacy test results to new software.'
+        },
+        {
+          title: 'Aspocomp — Electrical Tester',
+          meta: 'May 2023 – Sep 2023',
+          detail: 'Physical electrical testing, layer repair, and impedance/capacitance measurement of PCBs.'
+        },
+        {
+          title: 'University of Oulu — B.Sc. & M.Sc. Electrical and Electronics Engineering',
+          meta: 'Sep 2022 – present',
+          detail: 'B.Sc. thesis: RISC-V for Space Applications (published). M.Sc. focus: digital IC design, ASIC/SoC & FPGA systems, and embedded solutions.'
+        }
+      ]
+    },
+    consulting: {
+      title: 'Consulting Areas',
+      nodes: [
+        {
+          title: 'VHDL / SystemVerilog',
+          meta: 'RTL & feature development',
+          detail: 'RTL design and feature development on a RISC-V-based processor and UWB IP blocks at LG Electronics.'
+        },
+        {
+          title: 'UVM & Functional Verification',
+          meta: 'VCS · SVA · coverage',
+          detail: 'Verification environments, testcases, and functional coverage in SystemVerilog/UVM using VCS at LG Electronics.'
+        },
+        {
+          title: 'FPGA Prototyping',
+          meta: 'Vivado · Vitis · Zynq-7000',
+          detail: 'Zynq-7000 bring-up, bitstream generation for the NOEL-V RISC-V core, and FPGA/HDL lab material development at the University of Turku.'
+        },
+        {
+          title: 'Python Tooling & Automation',
+          meta: 'Test automation · data pipelines',
+          detail: 'Verification test automation at LG Electronics; automated RSSI data collection and legacy WATS-to-new-format converters at Abloy.'
+        }
+      ]
     }
+  };
+
+  const overlay = document.getElementById('skillModalOverlay');
+  const modal = overlay.querySelector('.skill-modal');
+  const titleEl = document.getElementById('skillModalTitle');
+  const treeEl = document.getElementById('skillTreeContent');
+  let lastFocused = null;
+
+  function renderTree(key) {
+    const data = skillTrees[key];
+    if (!data) return;
+    titleEl.textContent = data.title;
+    treeEl.innerHTML = data.nodes.map(n => `
+      <div class="skill-node">
+        <div class="skill-node-title">${n.title}</div>
+        <div class="skill-node-meta">${n.meta}</div>
+        <div class="skill-node-detail">${n.detail}</div>
+      </div>
+    `).join('');
   }
-  setTimeout(() => typeLine(lines[0]), 1200);
+
+  function openModal(key, trigger) {
+    lastFocused = trigger;
+    renderTree(key);
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('skillModalClose').focus();
+  }
+
+  function closeModal() {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    if (lastFocused) lastFocused.focus();
+  }
+
+  document.querySelectorAll('.hero-cards .card[data-tree]').forEach(card => {
+    card.addEventListener('click', () => openModal(card.dataset.tree, card));
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openModal(card.dataset.tree, card);
+      }
+    });
+  });
+
+  document.getElementById('skillModalClose').addEventListener('click', closeModal);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal();
+  });
 })();
+</script>
+
+<!-- ============ 3D CHIP BACKGROUND (Three.js) ============ -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const reduceMotion3d = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canvas = document.getElementById('chip3d');
+
+try {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 100);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+
+  // Lighting rig: cool key + green rim + copper fill, echoing the site's palette
+  scene.add(new THREE.HemisphereLight(0x9fd8ff, 0x0b1220, 0.9));
+  const keyLight = new THREE.DirectionalLight(0xeaf6ff, 2.2);
+  keyLight.position.set(3, 4, 2.5);
+  scene.add(keyLight);
+  const rimLight = new THREE.DirectionalLight(0x4ade80, 0.7);
+  rimLight.position.set(-3, -1, -3);
+  scene.add(rimLight);
+  const warmLight = new THREE.DirectionalLight(0xd9a866, 0.9);
+  warmLight.position.set(-2, 1.5, 3);
+  scene.add(warmLight);
+
+  let chip = null;
+  new GLTFLoader().load(
+    'i386_80386_pga_132.optimized.glb',
+    (gltf) => {
+      chip = gltf.scene;
+      const box = new THREE.Box3().setFromObject(chip);
+      const size = box.getSize(new THREE.Vector3());
+      const scale = 2.6 / Math.max(size.x, size.y, size.z, 0.0001);
+      chip.scale.setScalar(scale);
+      const centered = new THREE.Box3().setFromObject(chip).getCenter(new THREE.Vector3());
+      chip.position.sub(centered);
+      scene.add(chip);
+    },
+    undefined,
+    (err) => console.warn('Chip model failed to load:', err)
+  );
+
+  function onResize() {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  }
+  window.addEventListener('resize', onResize);
+
+  // Subtle pointer parallax, layered on top of the scroll-driven orbit below
+  let px = 0, py = 0, pcx = 0, pcy = 0;
+  if (!reduceMotion3d && matchMedia('(pointer: fine)').matches) {
+    window.addEventListener('pointermove', (e) => {
+      px = (e.clientX / innerWidth - 0.5) * 2;
+      py = (e.clientY / innerHeight - 0.5) * 2;
+    }, { passive: true });
+  }
+
+  // Camera orbits the model on a sphere (azimuth/elevation/distance) rather
+  // than flying to hand-picked xyz points, so it always stays framed on the
+  // chip no matter the exact keyframe values.
+  const cam = { az: 0.4, el: 0.35, dist: 6.5 };
+  let idle = 0;
+
+  if (!reduceMotion3d) {
+    const flyTo = (trigger, vars, opts = {}) => {
+      gsap.to(cam, {
+        ...vars,
+        ease: 'none',
+        immediateRender: false,
+        scrollTrigger: {
+          trigger,
+          start: opts.start || 'top bottom',
+          end: opts.end || 'top top',
+          scrub: 1.2
+        }
+      });
+    };
+    // About: push in close over the die surface
+    flyTo('#section3', { az: 1.3, el: 0.5, dist: 3.0 });
+    // Experience: swing around toward the pin array
+    flyTo('#section5', { az: 3.0, el: 0.25, dist: 3.4 });
+    // ...and drift slightly lower while reading, as if inspecting the pins
+    flyTo('#section5', { az: 3.6, el: -0.15, dist: 2.6 }, { start: 'top top', end: 'bottom bottom' });
+    // Contact: pull back out to the wide hero framing
+    flyTo('#section4', { az: 5.6, el: 0.4, dist: 6.8 });
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    if (!reduceMotion3d) idle += 0.0004;
+    pcx += (px - pcx) * 0.04;
+    pcy += (py - pcy) * 0.04;
+
+    const az = cam.az + idle + pcx * 0.15;
+    const el = cam.el - pcy * 0.08;
+    const d = cam.dist;
+    camera.position.set(
+      d * Math.sin(az) * Math.cos(el),
+      d * Math.sin(el),
+      d * Math.cos(az) * Math.cos(el)
+    );
+    camera.lookAt(0, 0, 0);
+
+    renderer.render(scene, camera);
+  }
+  animate();
+} catch (err) {
+  console.warn('3D chip background unavailable:', err);
+}
 </script>
 
 </body>
