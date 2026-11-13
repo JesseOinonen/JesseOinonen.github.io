@@ -504,6 +504,36 @@
     #section4 { text-align: center; }
     #section4 .card { text-align: center; max-width: 480px; font-size: 1.05rem; }
 
+    /* ================= SNOW (Nov–Feb) ================= */
+    #snow {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+    #snowHint {
+      position: fixed;
+      right: 1.2rem;
+      bottom: 1.1rem;
+      z-index: 950;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0.5rem 0.9rem;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      pointer-events: none;
+    }
+    #snowHint.show { opacity: 1; transform: none; }
+    #snowHint.tap { pointer-events: auto; cursor: pointer; }
+
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -517,6 +547,10 @@
 
 <!-- Scroll progress "bus" -->
 <div id="busbar"></div>
+
+<!-- Seasonal snow layer + shake hint -->
+<canvas id="snow" aria-hidden="true"></canvas>
+<button id="snowHint" type="button" hidden></button>
 
 <!-- ============ HUD ============ -->
 <div id="hud">
@@ -968,6 +1002,520 @@ navLinks.querySelectorAll('a').forEach(a =>
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal();
   });
+})();
+</script>
+
+<script>
+/* ============================================================
+   SEASONAL SNOW (Nov–Feb) — light snowfall that settles on the
+   cards and on the hero title's letter shapes. Shaking the mouse
+   (desktop) or the phone (mobile) dusts it all off.
+   Override for testing: ?snow=1 forces it on, ?snow=0 turns it off.
+   ============================================================ */
+(function snow() {
+  const param = new URLSearchParams(location.search).get('snow');
+  const inSeason = [10, 11, 0, 1].includes(new Date().getMonth());
+  if (param === '0' || (!inSeason && param !== '1')) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const canvas = document.getElementById('snow');
+  const hint = document.getElementById('snowHint');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const SNOW_FILL = 'rgba(255, 255, 255, 0.96)';
+  const SNOW_SHADOW = 'rgba(40, 60, 85, 0.55)';
+
+  let W = 0, H = 0, dpr = 1;
+  let flakes = [];
+  let surfaces = [];
+  let particles = [];
+  let lastWidth = 0;
+
+  /* ---------- canvas & flakes ---------- */
+  function resizeCanvas() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const target = Math.round(Math.min(90, Math.max(28, (W * H) / 17000)));
+    while (flakes.length < target) flakes.push(makeFlake(true));
+    flakes.length = target;
+  }
+
+  function makeFlake(initial) {
+    return {
+      x: rand(0, W),
+      y: initial ? rand(-H, 0) : rand(-40, -5),
+      r: rand(1.3, 3),
+      vy: rand(22, 42),
+      sway: rand(6, 18),
+      freq: rand(0.6, 1.4),
+      phase: rand(0, Math.PI * 2),
+      kx: 0, ky: 0
+    };
+  }
+
+  /* ---------- surfaces snow can settle on ---------- */
+  // A surface is a row of columns attached to an element. base[c] is the
+  // y offset (from the element's top) of the solid surface in column c,
+  // NaN where there is nothing to land on. h[c] is the snow depth.
+  // cap[c] is the most snow column c can hold: zero on steep slopes (snow
+  // slides off), and gently varying elsewhere so drifts look natural.
+  function makeSurface(el, fadeEl, ox, oy, col, base, maxH, steepness) {
+    const n = base.length;
+    const steep = col * steepness;
+    const cap = new Float32Array(n);
+    const p1 = rand(0, 6.3), p2 = rand(0, 6.3);
+    for (let c = 0; c < n; c++) {
+      if (Number.isNaN(base[c])) continue;
+      let slope = 0;
+      if (c > 0 && !Number.isNaN(base[c - 1])) slope = Math.max(slope, Math.abs(base[c] - base[c - 1]));
+      if (c < n - 1 && !Number.isNaN(base[c + 1])) slope = Math.max(slope, Math.abs(base[c + 1] - base[c]));
+      if (slope > steep) continue;
+      const x = c * col;
+      cap[c] = maxH * (0.78 + 0.12 * Math.sin(x / 23 + p1) + 0.1 * Math.sin(x / 9 + p2));
+    }
+    // Round off the ends of each drift: less snow close to an edge.
+    const dist = new Float32Array(n);
+    let d = 0;
+    for (let c = 0; c < n; c++) { d = cap[c] ? d + 1 : 0; dist[c] = d; }
+    d = 0;
+    for (let c = n - 1; c >= 0; c--) {
+      d = cap[c] ? d + 1 : 0;
+      const edge = Math.min(dist[c], d) * col;
+      cap[c] *= Math.sqrt(Math.min(1, edge / (maxH * 1.6)));
+    }
+    return { el, fadeEl, ox, oy, col, base, n, cap, h: new Float32Array(n) };
+  }
+
+  function cardSurface(el, fadeEl) {
+    const w = el.offsetWidth;
+    if (!w) return null;
+    const col = 3;
+    const n = Math.max(1, Math.round(w / col));
+    const r = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+    const base = new Float32Array(n);
+    for (let c = 0; c < n; c++) {
+      const dx = Math.min((c + 0.5) * col, w - (c + 0.5) * col);
+      base[c] = dx < r ? r - Math.sqrt(Math.max(0, r * r - (r - dx) * (r - dx))) : 0;
+    }
+    return makeSurface(el, fadeEl, 0, 0, col, base, 9, 0.6);
+  }
+
+  // Rasterise each glyph of the title and take its topmost opaque pixel per
+  // column, so snow sits on the actual letter shapes.
+  function titleSurfaces(h1) {
+    const cs = getComputedStyle(h1);
+    const size = parseFloat(cs.fontSize);
+    const font = `${cs.fontWeight} ${size}px ${cs.fontFamily}`;
+    const hRect = h1.getBoundingClientRect();
+    const off = document.createElement('canvas');
+    const octx = off.getContext('2d', { willReadFrequently: true });
+    const col = 2;
+    const lines = new Map();
+
+    const walker = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT);
+    const range = document.createRange();
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const text = node.textContent;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (!ch.trim()) continue;
+        range.setStart(node, i);
+        range.setEnd(node, i + 1);
+        const rc = range.getClientRects()[0];
+        if (!rc || rc.width < 1) continue;
+
+        const w = Math.ceil(rc.width) + 2;
+        const hgt = Math.ceil(rc.height) + 2;
+        off.width = w;
+        off.height = hgt;
+        octx.font = font;
+        octx.textBaseline = 'alphabetic';
+        octx.fillStyle = '#000';
+        const m = octx.measureText(ch);
+        const ascent = m.fontBoundingBoxAscent || rc.height * 0.78;
+        octx.fillText(ch, 0, ascent);
+        const data = octx.getImageData(0, 0, w, hgt).data;
+
+        const tops = new Float32Array(w).fill(NaN);
+        for (let x = 0; x < w; x++) {
+          for (let y = 0; y < hgt; y++) {
+            if (data[(y * w + x) * 4 + 3] > 140) { tops[x] = y; break; }
+          }
+        }
+
+        const key = Math.round(rc.top - hRect.top);
+        if (!lines.has(key)) lines.set(key, []);
+        lines.get(key).push({ left: rc.left - hRect.left, top: rc.top - hRect.top, tops });
+      }
+    }
+
+    const out = [];
+    lines.forEach(chars => {
+      const minL = Math.min(...chars.map(c => c.left));
+      const maxR = Math.max(...chars.map(c => c.left + c.tops.length));
+      const n = Math.ceil((maxR - minL) / col);
+      const base = new Float32Array(n).fill(NaN);
+      chars.forEach(c => {
+        for (let x = 0; x < c.tops.length; x++) {
+          const t = c.tops[x];
+          if (Number.isNaN(t)) continue;
+          const ci = Math.floor((c.left + x - minL) / col);
+          if (ci < 0 || ci >= n) continue;
+          const y = c.top + t;
+          if (Number.isNaN(base[ci]) || y < base[ci]) base[ci] = y;
+        }
+      });
+      out.push(makeSurface(h1, h1, minL, 0, col, base, Math.max(3, size * 0.075), 1.2));
+    });
+    return out;
+  }
+
+  function buildSurfaces() {
+    surfaces = [];
+    const title = document.querySelector('.hero-title');
+    if (title) surfaces.push(...titleSurfaces(title));
+    document.querySelectorAll('main .card').forEach(el => {
+      const s = cardSurface(el, el);
+      if (s) surfaces.push(s);
+    });
+    document.querySelectorAll('.timeline-content').forEach(el => {
+      const s = cardSurface(el, el.closest('.timeline-item') || el);
+      if (s) surfaces.push(s);
+    });
+    lastWidth = W;
+  }
+
+  /* ---------- accumulation ---------- */
+  const MOUND = [0.1, 0.22, 0.36, 0.22, 0.1];
+
+  function deposit(s, c, flake) {
+    const k = (flake.r * 7) / s.col;
+    for (let i = -2; i <= 2; i++) {
+      const j = c + i;
+      if (j < 0 || j >= s.n || !s.cap[j]) continue;
+      s.h[j] = Math.min(s.cap[j], s.h[j] + k * MOUND[i + 2]);
+    }
+    settle(s, c - 5, c + 5);
+  }
+
+  // Let snow slide downhill and fall off edges / steep glyph sides.
+  function settle(s, from, to) {
+    const { base, h, cap, col, n } = s;
+    const repose = col * 0.75;
+    from = Math.max(0, from);
+    to = Math.min(n - 1, to);
+    for (let it = 0; it < 3; it++) {
+      for (let i = from; i <= to; i++) {
+        if (!cap[i] || h[i] <= 0) continue;
+        const edgeMax = cap[i] * 0.35;
+        for (const j of [i - 1, i + 1]) {
+          const edge = j < 0 || j >= n || !cap[j];
+          if (edge) {
+            if (h[i] > edgeMax) {
+              const lost = h[i] - edgeMax;
+              h[i] = edgeMax;
+              if (lost > 0.6 && Math.random() < 0.3) crumb(s, i, j < i ? -1 : 1);
+            }
+            continue;
+          }
+          const diff = (base[j] - h[j]) - (base[i] - h[i]);
+          if (diff > repose) {
+            const t = Math.min(h[i], (diff - repose) / 2);
+            h[i] -= t;
+            h[j] = Math.min(cap[j], h[j] + t);
+          }
+        }
+      }
+    }
+  }
+
+  /* ---------- screen positions ---------- */
+  const rectCache = new Map();
+  function frameRects() {
+    rectCache.clear();
+    for (const s of surfaces) {
+      if (rectCache.has(s.el)) continue;
+      const r = s.el.getBoundingClientRect();
+      const op = parseFloat(s.fadeEl.style.opacity);
+      const visible = r.bottom > -30 && r.top < H + 30 && r.width > 0 &&
+                      (Number.isNaN(op) || op > 0.6);
+      rectCache.set(s.el, { left: r.left, top: r.top, visible });
+    }
+  }
+  const sx = (s, r) => r.left + s.ox;
+  const sy = (s, r) => r.top + s.oy;
+
+  /* ---------- dust particles ---------- */
+  function crumb(s, c, dir) {
+    const r = rectCache.get(s.el);
+    if (!r || !r.visible || particles.length > 2500) return;
+    particles.push({
+      x: sx(s, r) + (c + 0.5) * s.col, y: sy(s, r) + s.base[c] - 1,
+      vx: dir * rand(10, 30), vy: rand(-10, 10),
+      life: rand(0.6, 1), age: 0, r: rand(0.6, 1.2)
+    });
+  }
+
+  function dustOff(dir) {
+    for (const s of surfaces) {
+      const r = rectCache.get(s.el);
+      if (r && r.visible) {
+        const x0 = sx(s, r), y0 = sy(s, r);
+        for (let c = 0; c < s.n; c++) {
+          const d = s.h[c];
+          if (d < 0.25 || !s.cap[c]) continue;
+          const count = Math.min(3, Math.ceil(d / 2.2));
+          for (let k = 0; k < count && particles.length < 2500; k++) {
+            particles.push({
+              x: x0 + (c + Math.random()) * s.col,
+              y: y0 + s.base[c] - Math.random() * d,
+              vx: dir * rand(40, 230) + rand(-70, 70),
+              vy: -rand(60, 280),
+              life: rand(0.7, 1.6), age: 0, r: rand(0.7, 1.8)
+            });
+          }
+        }
+      }
+      s.h.fill(0);
+    }
+    for (const f of flakes) {
+      f.kx += dir * rand(60, 180);
+      f.ky -= rand(20, 90);
+    }
+    onCleared();
+  }
+
+  /* ---------- shake detection ---------- */
+  let lastShake = 0;
+  function shake(dir) {
+    const now = performance.now();
+    if (now - lastShake < 900) return;
+    lastShake = now;
+    dustOff(dir || (Math.random() < 0.5 ? -1 : 1));
+  }
+
+  // Mouse: several fast direction reversals in a short window.
+  const axes = { x: { dir: 0, travel: 0, flips: [] }, y: { dir: 0, travel: 0, flips: [] } };
+  let mx = null, my = null;
+  window.addEventListener('mousemove', e => {
+    if (mx === null) { mx = e.clientX; my = e.clientY; return; }
+    const now = performance.now();
+    const deltas = { x: e.clientX - mx, y: e.clientY - my };
+    mx = e.clientX; my = e.clientY;
+    for (const k of ['x', 'y']) {
+      const a = axes[k], d = deltas[k];
+      if (!d) continue;
+      const sgn = Math.sign(d);
+      if (sgn === a.dir) { a.travel += Math.abs(d); continue; }
+      if (a.travel > 35) a.flips.push(now);
+      a.dir = sgn;
+      a.travel = Math.abs(d);
+      a.flips = a.flips.filter(t => now - t < 800);
+      if (a.flips.length >= 4) { a.flips = []; shake(k === 'x' ? -sgn : 0); }
+    }
+  }, { passive: true });
+
+  // Phone: acceleration peaks.
+  let peaks = [], lastPeak = 0, prevG = null;
+  function onMotion(e) {
+    let mag = 0, ax = 0;
+    const a = e.acceleration;
+    if (a && a.x !== null) {
+      mag = Math.hypot(a.x, a.y, a.z);
+      ax = a.x;
+    } else if (e.accelerationIncludingGravity) {
+      const g = e.accelerationIncludingGravity;
+      if (prevG) {
+        ax = g.x - prevG.x;
+        mag = Math.hypot(ax, g.y - prevG.y, g.z - prevG.z);
+      }
+      prevG = { x: g.x, y: g.y, z: g.z };
+    }
+    const now = performance.now();
+    if (mag > 14 && now - lastPeak > 110) {
+      lastPeak = now;
+      peaks = peaks.filter(t => now - t < 1000);
+      peaks.push(now);
+      if (peaks.length >= 3) { peaks = []; shake(Math.sign(ax)); }
+    }
+  }
+
+  /* ---------- hint pill ---------- */
+  const coarse = window.matchMedia('(pointer: coarse)').matches;
+  const needsPermission = coarse && typeof DeviceMotionEvent !== 'undefined' &&
+                          typeof DeviceMotionEvent.requestPermission === 'function';
+  let hintDone = false;
+
+  if (coarse && !needsPermission && 'DeviceMotionEvent' in window) {
+    window.addEventListener('devicemotion', onMotion);
+  }
+
+  hint.hidden = false;
+  if (needsPermission) {
+    hint.textContent = '❄ Tap here, then shake your phone to clear the snow';
+    hint.classList.add('tap');
+    hint.addEventListener('click', () => {
+      DeviceMotionEvent.requestPermission().then(state => {
+        hint.classList.remove('tap');
+        if (state === 'granted') {
+          window.addEventListener('devicemotion', onMotion);
+          hint.textContent = '❄ Shake your phone to clear the snow';
+        } else {
+          hint.classList.remove('show');
+          hintDone = true;
+        }
+      }).catch(() => { hint.classList.remove('show'); hintDone = true; });
+    });
+  } else {
+    hint.textContent = coarse ? '❄ Shake your phone to clear the snow'
+                              : '❄ Shake your mouse to clear the snow';
+  }
+  setTimeout(() => { if (!hintDone) hint.classList.add('show'); }, 25000);
+
+  function onCleared() {
+    if (hintDone) return;
+    hintDone = true;
+    setTimeout(() => hint.classList.remove('show'), 1500);
+  }
+
+  /* ---------- main loop ---------- */
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    update(dt, now);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  const FILL_SECONDS = 90;  // time for a visible surface to fill up
+
+  function update(dt, now) {
+    frameRects();
+
+    // Steady background build-up (the "many tiny flakes" you don't see)
+    for (const s of surfaces) {
+      if (!rectCache.get(s.el).visible) continue;
+      const k = dt / FILL_SECONDS;
+      for (let c = 0; c < s.n; c++) {
+        if (s.cap[c] && s.h[c] < s.cap[c]) s.h[c] = Math.min(s.cap[c], s.h[c] + s.cap[c] * k);
+      }
+    }
+
+    // Move flakes and test landings
+    for (const f of flakes) {
+      const prevY = f.y;
+      f.kx *= Math.pow(0.08, dt);
+      f.ky *= Math.pow(0.08, dt);
+      f.x += (Math.sin(now / 1000 * f.freq + f.phase) * f.sway + 4 + f.kx) * dt;
+      f.y += (f.vy + f.ky) * dt;
+
+      let landed = false;
+      if (f.ky > -5) {
+        for (const s of surfaces) {
+          const r = rectCache.get(s.el);
+          if (!r.visible) continue;
+          const c = Math.floor((f.x - sx(s, r)) / s.col);
+          if (c < 0 || c >= s.n || !s.cap[c]) continue;
+          const top = sy(s, r) + s.base[c] - s.h[c];
+          if (prevY < top && f.y >= top) { deposit(s, c, f); landed = true; break; }
+        }
+      }
+      if (landed || f.y > H + 6) Object.assign(f, makeFlake(false));
+      if (f.x < -10) f.x += W + 20;
+      else if (f.x > W + 10) f.x -= W + 20;
+    }
+
+    // Dust particles
+    for (const p of particles) {
+      p.age += dt;
+      p.vy += 420 * dt;
+      p.vx *= Math.pow(0.35, dt);
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+    particles = particles.filter(p => p.age < p.life && p.y < H + 10);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = SNOW_FILL;
+    ctx.shadowColor = SNOW_SHADOW;
+    ctx.shadowBlur = 2.5;
+    ctx.shadowOffsetY = 0.5;
+
+    // Settled snow
+    ctx.beginPath();
+    for (const s of surfaces) {
+      const r = rectCache.get(s.el);
+      if (!r.visible) continue;
+      const x0 = sx(s, r), y0 = sy(s, r);
+      let c = 0;
+      while (c < s.n) {
+        if (!s.cap[c] || s.h[c] < 0.15) { c++; continue; }
+        const start = c;
+        while (c < s.n && s.cap[c] && s.h[c] >= 0.15) c++;
+        const end = c - 1;
+        ctx.moveTo(x0 + start * s.col, y0 + s.base[start]);
+        for (let i = start; i <= end; i++) {
+          ctx.lineTo(x0 + (i + 0.5) * s.col, y0 + s.base[i] - s.h[i]);
+        }
+        ctx.lineTo(x0 + (end + 1) * s.col, y0 + s.base[end]);
+        for (let i = end; i >= start; i--) {
+          ctx.lineTo(x0 + (i + 0.5) * s.col, y0 + s.base[i] + 0.5);
+        }
+        ctx.closePath();
+      }
+    }
+    ctx.fill();
+
+    // Falling flakes
+    ctx.beginPath();
+    for (const f of flakes) {
+      ctx.moveTo(f.x + f.r, f.y);
+      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+    }
+    ctx.fill();
+
+    // Dust, bucketed by opacity to keep draw calls low
+    if (particles.length) {
+      for (let b = 0; b < 4; b++) {
+        ctx.globalAlpha = 1 - b * 0.25;
+        ctx.beginPath();
+        for (const p of particles) {
+          if (Math.min(3, Math.floor((p.age / p.life) * 4)) !== b) continue;
+          ctx.moveTo(p.x + p.r, p.y);
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        }
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* ---------- start ---------- */
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (Math.abs(window.innerWidth - lastWidth) > 1) buildSurfaces();
+    }, 250);
+  });
+
+  // Snow starts falling right away; surfaces are (re)built once the web
+  // fonts have loaded so the title's letter shapes are measured correctly.
+  resizeCanvas();
+  buildSurfaces();
+  requestAnimationFrame(t => { last = t; frame(t); });
+  if (document.fonts) document.fonts.ready.then(buildSurfaces);
 })();
 </script>
 
