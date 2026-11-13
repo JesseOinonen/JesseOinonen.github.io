@@ -1395,13 +1395,17 @@ navLinks.querySelectorAll('a').forEach(a =>
     requestAnimationFrame(frame);
   }
 
-  const FILL_SECONDS = 90;  // time for a visible surface to fill up
+  const FILL_SECONDS = 90;   // time for a visible surface to fill up
+  const FILL_DELAY = 20;     // seconds before the steady build-up starts
+  let elapsed = 0;
 
   function update(dt, now) {
     frameRects();
+    elapsed += dt;
 
-    // Steady background build-up (the "many tiny flakes" you don't see)
-    for (const s of surfaces) {
+    // Steady background build-up (the "many tiny flakes" you don't see),
+    // starting only after the snow has been falling for a while
+    if (elapsed >= FILL_DELAY) for (const s of surfaces) {
       if (!rectCache.get(s.el).visible) continue;
       const k = dt / FILL_SECONDS;
       for (let c = 0; c < s.n; c++) {
